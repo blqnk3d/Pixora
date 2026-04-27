@@ -72,9 +72,11 @@ export class CanvasEngine {
         this.ctx.imageSmoothingEnabled = false;
 
         const layers = this.state.get('layers');
+        const layerCount = layers.length;
 
-        layers.forEach((layer, i) => {
-            if (!layer.visible) return;
+        for (let i = 0; i < layerCount; i++) {
+            const layer = layers[i];
+            if (!layer.visible) continue;
 
             if (layer.dirty || !layer.scaledCanvas || layer.lastZoom !== zoom) {
                 if (layer.dirty) {
@@ -83,9 +85,7 @@ export class CanvasEngine {
                     layer.dirty = false;
                 }
 
-                const scaled = document.createElement('canvas');
-                scaled.width = width * zoom;
-                scaled.height = height * zoom;
+                const scaled = new OffscreenCanvas(width * zoom, height * zoom);
                 const sctx = scaled.getContext('2d');
                 sctx.imageSmoothingEnabled = false;
                 sctx.drawImage(layer.offscreen, 0, 0, width * zoom, height * zoom);
@@ -96,31 +96,49 @@ export class CanvasEngine {
             this.ctx.globalAlpha = layer.opacity;
             this.ctx.imageSmoothingEnabled = false;
             this.ctx.drawImage(layer.scaledCanvas, 0, 0);
-        });
+        }
         this.ctx.globalAlpha = 1;
 
         if (window.app && window.app.tools) {
-            if (window.app.tools.selector && window.app.tools.selector.selection) {
-                window.app.tools.selector.drawSelection();
+            const tools = window.app.tools;
+            const selector = tools.selector;
+            if (selector && selector.selection) {
+                selector.drawSelection();
             }
-            if (window.app.currentTool && window.app.currentTool.updatePreview && window.app.currentTool.previewPos) {
-                window.app.currentTool.updatePreview(window.app.currentTool.previewPos);
+            const magicSelect = tools.magicSelect;
+            if (magicSelect && magicSelect.selection) {
+                magicSelect.drawSelection();
+            }
+            const ellipseSelect = tools.ellipseSelect;
+            if (ellipseSelect && ellipseSelect.selection) {
+                ellipseSelect.drawSelection();
+            }
+            const currentTool = window.app.currentTool;
+            if (currentTool && currentTool.updatePreview && currentTool.previewPos) {
+                currentTool.updatePreview(currentTool.previewPos);
             }
         }
 
         if (this.state.get('showGrid') && zoom >= 4) {
             this.ctx.strokeStyle = 'rgba(128,128,128,0.3)';
             this.ctx.lineWidth = 1;
+            const zoomW = zoom;
+            const zoomH = zoom;
+            const scaledWidth = width * zoom;
+            const scaledHeight = height * zoom;
+
             for (let x = 0; x <= width; x++) {
+                const px = x * zoomW + 0.5;
                 this.ctx.beginPath();
-                this.ctx.moveTo(x * zoom + 0.5, 0);
-                this.ctx.lineTo(x * zoom + 0.5, height * zoom);
+                this.ctx.moveTo(px, 0);
+                this.ctx.lineTo(px, scaledHeight);
                 this.ctx.stroke();
             }
             for (let y = 0; y <= height; y++) {
+                const py = y * zoomH + 0.5;
                 this.ctx.beginPath();
-                this.ctx.moveTo(0, y * zoom + 0.5);
-                this.ctx.lineTo(width * zoom, y * zoom + 0.5);
+                this.ctx.moveTo(0, py);
+                this.ctx.lineTo(scaledWidth, py);
                 this.ctx.stroke();
             }
         }
@@ -145,6 +163,17 @@ export class CanvasEngine {
         layer.scaledCanvas = null;
 
         return oldColor;
+    }
+
+    getPixel(x, y, layerIndex = null) {
+        const layerIdx = layerIndex ?? this.state.get('activeLayer');
+        const layer = this.state.get('layers')[layerIdx];
+        if (!layer) return null;
+
+        const idx = (y * this.width + x) * 4;
+        if (idx < 0 || idx >= layer.pixels.length) return null;
+
+        return [layer.pixels[idx], layer.pixels[idx+1], layer.pixels[idx+2], layer.pixels[idx+3]];
     }
 
     resizeCanvas(newWidth, newHeight) {

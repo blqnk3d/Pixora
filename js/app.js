@@ -14,6 +14,8 @@ import { FillTool } from './tools/fill.js';
 import { SelectorTool } from './tools/selector.js';
 import { TransformTool } from './tools/transform.js';
 import { TextTool } from './tools/text.js';
+import { MagicSelectTool } from './tools/magic-select.js';
+import { EllipseSelectTool } from './tools/ellipse-select.js';
 
 class App {
     constructor() {
@@ -27,7 +29,9 @@ class App {
             fill: new FillTool(this.canvas, this.state),
             selector: new SelectorTool(this.canvas, this.state, this.history),
             move: new TransformTool(this.canvas, this.state, this.history),
-            text: new TextTool(this.canvas, this.state, this.history)
+            text: new TextTool(this.canvas, this.state, this.history),
+            magicSelect: new MagicSelectTool(this.canvas, this.state, this.history),
+            ellipseSelect: new EllipseSelectTool(this.canvas, this.state, this.history)
         };
 
         this.currentTool = this.tools.pencil;
@@ -65,6 +69,50 @@ class App {
         }
         this.toolbar.updateActive(name);
         this.state.set('currentTool', name);
+    }
+
+    deselectAll() {
+        if (this.tools.selector) this.tools.selector.selection = null;
+        if (this.tools.magicSelect) this.tools.magicSelect.selection = null;
+        if (this.tools.ellipseSelect) this.tools.ellipseSelect.selection = null;
+        this.canvas.render();
+    }
+
+    isPointInSelection(x, y) {
+        const selector = this.tools.selector;
+        const magicSelect = this.tools.magicSelect;
+        const ellipseSelect = this.tools.ellipseSelect;
+
+        if (selector?.selection) {
+            const { x1, y1, x2, y2 } = selector.selection;
+            const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+            if (x >= minX && x <= maxX && y >= minY && y <= maxY) return true;
+        }
+
+        if (magicSelect?.selection) {
+            const { x1, y1, x2, y2, mask } = magicSelect.selection;
+            if (x >= x1 && x <= x2 && y >= y1 && y <= y2 && mask?.[y * this.canvas.width + x]) return true;
+        }
+
+        if (ellipseSelect?.selection) {
+            const { x1, y1, x2, y2 } = ellipseSelect.selection;
+            const minX = Math.min(x1, x2), maxX = Math.max(x1, x2);
+            const minY = Math.min(y1, y2), maxY = Math.max(y1, y2);
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const radiusX = (maxX - minX + 1) / 2;
+            const radiusY = (maxY - minY + 1) / 2;
+            const dx = (x - centerX) / radiusX;
+            const dy = (y - centerY) / radiusY;
+            if (dx * dx + dy * dy <= 1) return true;
+        }
+
+        return false;
+    }
+
+    hasSelection() {
+        return !!(this.tools.selector?.selection || this.tools.magicSelect?.selection || this.tools.ellipseSelect?.selection);
     }
 
     bindEvents() {
@@ -181,7 +229,9 @@ class App {
                     break;
                 case 'a':
                     e.preventDefault();
-                    this.tools.selector.selectAll();
+                    if (this.currentTool === this.tools.selector) {
+                        this.tools.selector.selectAll();
+                    }
                     break;
             }
         } else {
@@ -192,8 +242,11 @@ class App {
                 case 'm': this.selectTool('selector'); break;
                 case 'v': this.selectTool('move'); break;
                 case 't': this.selectTool('text'); break;
+                case 'w': this.selectTool('magicSelect'); break;
+                case 'o': this.selectTool('ellipseSelect'); break;
                 case '[': this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 2)); break;
                 case ']': this.state.set('brushSize', Math.min(7, this.state.get('brushSize') + 2)); break;
+                case 'escape': this.deselectAll(); break;
             }
         }
     }

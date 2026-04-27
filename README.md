@@ -1,4 +1,4 @@
-# Prity - Pixel Art Editor
+# Pixora - Pixel Art Editor
 
 A lightweight, browser-based pixel art editor built with vanilla JavaScript and Canvas API. No dependencies, fully static - perfect for GitHub Pages.
 
@@ -9,6 +9,8 @@ A lightweight, browser-based pixel art editor built with vanilla JavaScript and 
 - **Eraser (E)** - Erase pixels with same brush size
 - **Fill/Bucket (G)** - Flood fill connected areas
 - **Selector (M)** - Select rectangular regions, cut/copy/paste
+- **Magic Select (W)** - Select contiguous areas by color with tolerance control
+- **Ellipse Select (O)** - Create elliptical selection areas
 - **Move (V)** - Move layers, scale (50%/200%), rotate (90°/180°), crop to selection
 - **Text (T)** - Add text to layers, editable after placement
 
@@ -39,11 +41,12 @@ A lightweight, browser-based pixel art editor built with vanilla JavaScript and 
 - Retro font toggle (Press Start 2P) - saved in localStorage
 
 ### Keyboard Shortcuts
-- `B` - Pencil | `E` - Eraser | `G` - Fill | `M` - Select | `V` - Move
+- `B` - Pencil | `E` - Eraser | `G` - Fill | `M` - Select | `W` - Magic Select | `O` - Ellipse Select | `V` - Move
 - `Ctrl+S` - Save PNG | `Ctrl+O` - Open | `Ctrl+N` - New
 - `Ctrl+Z` - Undo | `Ctrl+Y` - Redo | `Ctrl+A` - Select All
 - `Ctrl+Scroll` - Zoom | `Middle Click Drag` - Pan
 - `[` / `]` - Decrease/Increase brush size
+- `Escape` - Deselect all selections
 
 ## Upcoming Features
 - Text tool (add/edit text fields on layers)

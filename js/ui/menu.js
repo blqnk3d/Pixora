@@ -84,7 +84,7 @@ export class MenuBar {
                 const isRetro = !app.state.get('retroFont');
                 app.state.set('retroFont', isRetro);
                 document.body.classList.toggle('retro-font', isRetro);
-                localStorage.setItem('prity-retro-font', isRetro);
+                localStorage.setItem('pixora-retro-font', isRetro);
                 const link = document.getElementById('retro-font-link');
                 if (link) link.style.display = isRetro ? 'block' : 'none';
                 break;

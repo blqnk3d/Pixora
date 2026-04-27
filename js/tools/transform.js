@@ -7,6 +7,11 @@ export class TransformTool {
         this.isResizing = false;
         this.startPos = null;
         this.layerStartPixels = null;
+        this.isMovingSelection = false;
+        this.selectionTool = null;
+        this.selectedPixelsData = null;
+        this.originalSelectionBounds = null;
+        this.originalMask = null;
     }
 
     activate() {
@@ -24,6 +29,35 @@ export class TransformTool {
 
         this.isDragging = true;
         this.startPos = pos;
+
+        const selector = window.app?.tools?.selector;
+        const magicSelect = window.app?.tools?.magicSelect;
+        const ellipseSelect = window.app?.tools?.ellipseSelect;
+
+        if (selector?.selection || magicSelect?.selection || ellipseSelect?.selection) {
+            this.isMovingSelection = true;
+            this.selectionTool = selector?.selection ? selector : magicSelect?.selection ? magicSelect : ellipseSelect;
+            this.selectedPixelsData = this.selectionTool.getSelectedPixels();
+            this.layerStartPixels = new Uint8ClampedArray(layer.pixels);
+
+            if (this.selectionTool.selection?.mask) {
+                this.originalMask = new Uint8Array(this.selectionTool.selection.mask);
+                this.originalSelectionBounds = {
+                    x1: this.selectionTool.selection.x1,
+                    y1: this.selectionTool.selection.y1,
+                    x2: this.selectionTool.selection.x2,
+                    y2: this.selectionTool.selection.y2
+                };
+            } else {
+                this.originalMask = null;
+                this.originalSelectionBounds = null;
+            }
+
+            this.history.beginStroke();
+            return;
+        }
+
+        this.isMovingSelection = false;
         this.layerStartPixels = new Uint8ClampedArray(layer.pixels);
         this.history.beginStroke();
     }
@@ -39,19 +73,66 @@ export class TransformTool {
             const width = this.canvas.width;
             const height = this.canvas.height;
 
-            layer.pixels.fill(0);
+            if (this.isMovingSelection && this.selectedPixelsData && this.selectionTool) {
+                layer.pixels = new Uint8ClampedArray(this.layerStartPixels);
 
-            for (let y = 0; y < height; y++) {
-                for (let x = 0; x < width; x++) {
-                    const srcX = x - dx;
-                    const srcY = y - dy;
-                    if (srcX >= 0 && srcX < width && srcY >= 0 && srcY < height) {
-                        const srcIdx = (srcY * width + srcX) * 4;
-                        const dstIdx = (y * width + x) * 4;
-                        layer.pixels[dstIdx] = this.layerStartPixels[srcIdx];
-                        layer.pixels[dstIdx+1] = this.layerStartPixels[srcIdx+1];
-                        layer.pixels[dstIdx+2] = this.layerStartPixels[srcIdx+2];
-                        layer.pixels[dstIdx+3] = this.layerStartPixels[srcIdx+3];
+                const { pixels: selPixels, x: selX, y: selY, width: selW, height: selH } = this.selectedPixelsData;
+                const newX = selX + dx;
+                const newY = selY + dy;
+
+                for (let y = 0; y < selH; y++) {
+                    for (let x = 0; x < selW; x++) {
+                        const srcIdx = (y * selW + x) * 4;
+                        if (selPixels[srcIdx + 3] > 0) {
+                            const destX = newX + x;
+                            const destY = newY + y;
+                            if (destX >= 0 && destX < width && destY >= 0 && destY < height) {
+                                const dstIdx = (destY * width + destX) * 4;
+                                layer.pixels[dstIdx] = selPixels[srcIdx];
+                                layer.pixels[dstIdx+1] = selPixels[srcIdx+1];
+                                layer.pixels[dstIdx+2] = selPixels[srcIdx+2];
+                                layer.pixels[dstIdx+3] = selPixels[srcIdx+3];
+                            }
+                        }
+                    }
+                }
+
+                this.selectionTool.selection.x1 = newX;
+                this.selectionTool.selection.x2 = newX + selW - 1;
+                this.selectionTool.selection.y1 = newY;
+                this.selectionTool.selection.y2 = newY + selH - 1;
+
+                if (this.selectionTool.selection.mask && this.originalMask && this.originalSelectionBounds) {
+                    const newMask = new Uint8Array(width * height);
+                    const oBounds = this.originalSelectionBounds;
+                    for (let y = oBounds.y1; y <= oBounds.y2; y++) {
+                        for (let x = oBounds.x1; x <= oBounds.x2; x++) {
+                            if (this.originalMask[y * width + x]) {
+                                const newMaskX = x + dx;
+                                const newMaskY = y + dy;
+                                if (newMaskX >= 0 && newMaskX < width && newMaskY >= 0 && newMaskY < height) {
+                                    newMask[newMaskY * width + newMaskX] = 1;
+                                }
+                            }
+                        }
+                    }
+                    this.selectionTool.selection.mask = newMask;
+                }
+            } else {
+                layer.pixels.fill(0);
+
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        const srcX = x - dx;
+                        const srcY = y - dy;
+                        if (srcX >= 0 && srcX < width && srcY >= 0 && srcY < height) {
+                            const srcIdx = (srcY * width + srcX) * 4;
+                            const dstIdx = (y * width + x) * 4;
+                            layer.pixels[dstIdx] = this.layerStartPixels[srcIdx];
+                            layer.pixels[dstIdx+1] = this.layerStartPixels[srcIdx+1];
+                            layer.pixels[dstIdx+2] = this.layerStartPixels[srcIdx+2];
+                            layer.pixels[dstIdx+3] = this.layerStartPixels[srcIdx+3];
+                        }
                     }
                 }
             }
@@ -66,7 +147,11 @@ export class TransformTool {
         if (this.isDragging) {
             this.isDragging = false;
             this.startPos = null;
-            this.layerStartPixels = null;
+            if (this.isMovingSelection) {
+                this.selectedPixelsData = this.selectionTool?.getSelectedPixels();
+            } else {
+                this.layerStartPixels = null;
+            }
             this.history.endStroke();
         }
     }
@@ -119,8 +204,8 @@ export class TransformTool {
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
 
-        const newWidth = Math.abs(width * cos) + Math.abs(height * sin);
-        const newHeight = Math.abs(width * sin) + Math.abs(height * cos);
+        const newWidth = Math.round(Math.abs(width * cos) + Math.abs(height * sin));
+        const newHeight = Math.round(Math.abs(width * sin) + Math.abs(height * cos));
         const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
 
         const cx = width / 2;

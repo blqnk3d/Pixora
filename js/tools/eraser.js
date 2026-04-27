@@ -45,7 +45,9 @@ export class EraserTool {
                 const x = pos.x + dx - offset;
                 const y = pos.y + dy - offset;
                 if (x >= 0 && y >= 0 && x < this.canvas.width && y < this.canvas.height) {
-                    this.canvas.setPixel(x, y, transparent);
+                    if (!window.app.hasSelection() || window.app.isPointInSelection(x, y)) {
+                        this.canvas.setPixel(x, y, transparent);
+                    }
                 }
             }
         }

@@ -11,11 +11,9 @@ export class History {
         const layers = this.state.get('layers');
         this.strokeSnapshot = layers.map(layer => ({
             name: layer.name,
-            pixels: new Uint8ClampedArray(layer.pixels),
+            pixels: layer.pixels.slice(),
             visible: layer.visible,
             opacity: layer.opacity,
-            offscreen: layer.offscreen,
-            offscreenCtx: layer.offscreenCtx,
             dirty: true
         }));
     }
@@ -24,21 +22,22 @@ export class History {
         if (!this.strokeSnapshot) return;
 
         const layers = this.state.get('layers');
-        const currentSnapshot = layers.map(layer => ({
-            name: layer.name,
-            pixels: new Uint8ClampedArray(layer.pixels),
-            visible: layer.visible,
-            opacity: layer.opacity,
-            offscreen: layer.offscreen,
-            offscreenCtx: layer.offscreenCtx,
-            dirty: true
-        }));
+        const diffs = [];
+        const hasChanges = layers.some((layer, i) => {
+            const snapshot = this.strokeSnapshot[i];
+            if (layer.name !== snapshot.name) return true;
+            if (layer.visible !== snapshot.visible) return true;
+            if (layer.opacity !== snapshot.opacity) return true;
 
-        const hasChanges = currentSnapshot.some((layer, i) => {
-            if (layer.name !== this.strokeSnapshot[i].name) return true;
-            if (layer.visible !== this.strokeSnapshot[i].visible) return true;
-            if (layer.opacity !== this.strokeSnapshot[i].opacity) return true;
-            return layer.pixels.some((val, j) => val !== this.strokeSnapshot[i].pixels[j]);
+            for (let j = 0; j < layer.pixels.length; j += 4) {
+                if (layer.pixels[j] !== snapshot.pixels[j] ||
+                    layer.pixels[j+1] !== snapshot.pixels[j+1] ||
+                    layer.pixels[j+2] !== snapshot.pixels[j+2] ||
+                    layer.pixels[j+3] !== snapshot.pixels[j+3]) {
+                    return true;
+                }
+            }
+            return false;
         });
 
         if (hasChanges) {
@@ -56,17 +55,13 @@ export class History {
         if (this.undoStack.length === 0) return;
 
         const layers = this.state.get('layers');
-        const currentSnapshot = layers.map(layer => ({
+        this.redoStack.push(layers.map((layer, i) => ({
             name: layer.name,
-            pixels: new Uint8ClampedArray(layer.pixels),
+            pixels: layer.pixels.slice(),
             visible: layer.visible,
             opacity: layer.opacity,
-            offscreen: layer.offscreen,
-            offscreenCtx: layer.offscreenCtx,
             dirty: true
-        }));
-
-        this.redoStack.push(currentSnapshot);
+        })));
 
         const prevSnapshot = this.undoStack.pop();
         this.restoreSnapshot(prevSnapshot);
@@ -76,34 +71,39 @@ export class History {
         if (this.redoStack.length === 0) return;
 
         const layers = this.state.get('layers');
-        const currentSnapshot = layers.map(layer => ({
+        this.undoStack.push(layers.map((layer, i) => ({
             name: layer.name,
-            pixels: new Uint8ClampedArray(layer.pixels),
+            pixels: layer.pixels.slice(),
             visible: layer.visible,
             opacity: layer.opacity,
-            offscreen: layer.offscreen,
-            offscreenCtx: layer.offscreenCtx,
             dirty: true
-        }));
-
-        this.undoStack.push(currentSnapshot);
+        })));
 
         const nextSnapshot = this.redoStack.pop();
         this.restoreSnapshot(nextSnapshot);
     }
 
     restoreSnapshot(snapshot) {
-        const layers = snapshot.map(s => ({
-            name: s.name,
-            pixels: s.pixels,
-            visible: s.visible,
-            opacity: s.opacity,
-            id: Date.now() + Math.random(),
-            offscreen: s.offscreen,
-            offscreenCtx: s.offscreenCtx,
-            dirty: true
+        const width = this.state.get('canvasWidth');
+        const height = this.state.get('canvasHeight');
+        this.state.set('layers', snapshot.map(s => {
+            const offscreen = new OffscreenCanvas(width, height);
+            const offscreenCtx = offscreen.getContext('2d');
+            const imageData = new ImageData(s.pixels, width, height);
+            offscreenCtx.putImageData(imageData, 0, 0);
+            return {
+                name: s.name,
+                pixels: s.pixels,
+                visible: s.visible,
+                opacity: s.opacity,
+                id: Date.now() + Math.random(),
+                offscreen,
+                offscreenCtx,
+                dirty: false,
+                scaledCanvas: null,
+                lastZoom: null
+            };
         }));
-        this.state.set('layers', layers);
         if (window.app) {
             window.app.canvas.render();
             window.app.layersPanel.render();

@@ -8,7 +8,7 @@ export class PencilTool {
     }
 
     activate() {
-        this.canvas.element.style.cursor = 'none';
+        this.canvas.element.style.cursor = 'crosshair';
     }
 
     deactivate() {
@@ -46,10 +46,15 @@ export class PencilTool {
         const size = this.state.get('brushSize');
         const offset = Math.floor(size / 2);
         const ctx = this.canvas.ctx;
-        const color = this.state.get('currentColor');
-        const brightness = (color[0] + color[1] + color[2]) / 3;
-        const previewColor = brightness > 128 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
-        ctx.strokeStyle = previewColor;
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(
+            (pos.x - offset) * zoom,
+            (pos.y - offset) * zoom,
+            size * zoom,
+            size * zoom
+        );
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
         ctx.strokeRect(
             (pos.x - offset) * zoom,
@@ -57,35 +62,6 @@ export class PencilTool {
             size * zoom,
             size * zoom
         );
-    }
-
-    activate() {
-        this.canvas.element.style.cursor = 'crosshair';
-    }
-
-    deactivate() {
-        this.isDrawing = false;
-        this.lastPos = null;
-    }
-
-    onMouseDown(pos) {
-        this.isDrawing = true;
-        this.lastPos = pos;
-        window.app.history.beginStroke();
-        this.drawPixel(pos);
-    }
-
-    onMouseMove(pos) {
-        if (!this.isDrawing || !pos) return;
-        this.drawLine(this.lastPos, pos);
-        this.lastPos = pos;
-        this.canvas.render();
-    }
-
-    onMouseUp() {
-        this.isDrawing = false;
-        this.lastPos = null;
-        window.app.history.endStroke();
     }
 
     drawPixel(pos) {
@@ -98,7 +74,9 @@ export class PencilTool {
                 const x = pos.x + dx - offset;
                 const y = pos.y + dy - offset;
                 if (x >= 0 && y >= 0 && x < this.canvas.width && y < this.canvas.height) {
-                    this.canvas.setPixel(x, y, color);
+                    if (!window.app.hasSelection() || window.app.isPointInSelection(x, y)) {
+                        this.canvas.setPixel(x, y, color);
+                    }
                 }
             }
         }

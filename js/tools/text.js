@@ -79,7 +79,8 @@ export class TextTool {
 
         const ctx = this.canvas.element.getContext('2d');
         const zoom = this.canvas.zoom;
-        ctx.font = `${12 * zoom}px var(--font-family)`;
+        const fontFamily = getComputedStyle(document.documentElement).getPropertyValue('--font-family').trim() || 'Arial';
+        ctx.font = `${12 * zoom}px ${fontFamily}`;
         ctx.fillStyle = `rgb(${this.state.get('currentColor').slice(0,3).join(',')})`;
         ctx.imageSmoothingEnabled = false;
 

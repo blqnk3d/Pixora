@@ -49,7 +49,9 @@ export class State {
             id: Date.now() + Math.random(),
             offscreen,
             offscreenCtx,
-            dirty: true
+            dirty: true,
+            scaledCanvas: null,
+            lastZoom: null
         };
     }
 
