@@ -4,6 +4,55 @@ export class PencilTool {
         this.state = state;
         this.isDrawing = false;
         this.lastPos = null;
+        this.previewPos = null;
+    }
+
+    activate() {
+        this.canvas.element.style.cursor = 'none';
+    }
+
+    deactivate() {
+        this.isDrawing = false;
+        this.lastPos = null;
+        this.previewPos = null;
+        this.canvas.render();
+    }
+
+    onMouseDown(pos) {
+        this.isDrawing = true;
+        this.lastPos = pos;
+        window.app.history.beginStroke();
+        this.drawPixel(pos);
+    }
+
+    onMouseMove(pos) {
+        this.previewPos = pos;
+        if (!this.isDrawing || !pos) return;
+        this.drawLine(this.lastPos, pos);
+        this.lastPos = pos;
+    }
+
+    onMouseUp() {
+        this.isDrawing = false;
+        this.lastPos = null;
+        window.app.history.endStroke();
+    }
+
+    updatePreview(pos, e) {
+        if (this.isDrawing || !pos) return;
+        this.previewPos = pos;
+        this.canvas.render();
+        const zoom = this.canvas.zoom;
+        const size = this.state.get('brushSize');
+        const ctx = this.canvas.ctx;
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(
+            pos.x * zoom - 0.5,
+            pos.y * zoom - 0.5,
+            size * zoom + 1,
+            size * zoom + 1
+        );
     }
 
     activate() {

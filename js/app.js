@@ -31,6 +31,9 @@ class App {
         };
 
         this.currentTool = this.tools.pencil;
+        this.isPanning = false;
+        this.panStart = null;
+        this.scrollStart = null;
 
         this.menu = new MenuBar(this);
         this.toolbar = new Toolbar(this);
@@ -45,10 +48,11 @@ class App {
 
     init() {
         this.state.initCanvas(32, 32);
-        this.bindEvents();
         this.selectTool('pencil');
+        this.bindEvents();
         this.canvas.render();
         this.layersPanel.render();
+        this.statusBar.render();
     }
 
     selectTool(name) {
@@ -66,19 +70,19 @@ class App {
     bindEvents() {
         const canvasEl = this.canvas.element;
         const container = document.getElementById('canvas-container');
-        this.isPanning = false;
-        this.panStart = null;
-        this.scrollStart = null;
 
         canvasEl.addEventListener('mousedown', (e) => {
+            e.preventDefault();
             if (e.button === 1) {
-                e.preventDefault();
                 this.isPanning = true;
                 this.panStart = { x: e.clientX, y: e.clientY };
                 this.scrollStart = { x: container.scrollLeft, y: container.scrollTop };
                 canvasEl.style.cursor = 'grab';
             } else {
-                this.onCanvasMouseDown(e);
+                const pos = this.canvas.getPixelPosition(e);
+                if (pos) {
+                    this.currentTool.onMouseDown(pos, e);
+                }
             }
         });
 
@@ -88,11 +92,17 @@ class App {
                 const dy = e.clientY - this.panStart.y;
                 container.scrollLeft = this.scrollStart.x - dx;
                 container.scrollTop = this.scrollStart.y - dy;
-            } else if (this.currentTool && this.currentTool.onMouseMove) {
-                const pos = this.canvas.getPixelPosition(e);
-                this.statusBar.updatePosition(pos);
-                if (pos && this.currentTool.isDrawing) {
-                    this.currentTool.onMouseMove(pos, e);
+            } else {
+                if (this.currentTool && this.currentTool.onMouseMove) {
+                    const pos = this.canvas.getPixelPosition(e);
+                    this.statusBar.updatePosition(pos);
+                    if (pos && this.currentTool.isDrawing) {
+                        this.currentTool.onMouseMove(pos, e);
+                        this.canvas.render();
+                    }
+                    if (this.currentTool.updatePreview) {
+                        this.currentTool.updatePreview(pos, e);
+                    }
                 }
             }
         });
@@ -102,11 +112,23 @@ class App {
                 this.isPanning = false;
                 canvasEl.style.cursor = '';
             } else {
-                this.onCanvasMouseUp(e);
+                if (this.currentTool && this.currentTool.onMouseUp) {
+                    this.currentTool.onMouseUp(e);
+                    this.canvas.render();
+                }
             }
         });
 
-        canvasEl.addEventListener('wheel', (e) => this.onWheel(e));
+        canvasEl.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+                if (e.deltaY > 0) {
+                    this.canvas.zoomOut();
+                } else {
+                    this.canvas.zoomIn();
+                }
+            }
+        });
 
         document.addEventListener('keydown', (e) => this.onKeyDown(e));
 
@@ -127,38 +149,6 @@ class App {
                 this.importer.loadFile(file);
             }
         });
-    }
-
-    onCanvasMouseDown(e) {
-        const pos = this.canvas.getPixelPosition(e);
-        if (pos) {
-            this.currentTool.onMouseDown(pos, e);
-        }
-    }
-
-    onCanvasMouseMove(e) {
-        const pos = this.canvas.getPixelPosition(e);
-        this.statusBar.updatePosition(pos);
-        if (pos && this.currentTool.onMouseMove) {
-            this.currentTool.onMouseMove(pos, e);
-        }
-    }
-
-    onCanvasMouseUp(e) {
-        if (this.currentTool.onMouseUp) {
-            this.currentTool.onMouseUp(e);
-        }
-    }
-
-    onWheel(e) {
-        if (e.ctrlKey || e.metaKey) {
-            e.preventDefault();
-            if (e.deltaY > 0) {
-                this.canvas.zoomOut();
-            } else {
-                this.canvas.zoomIn();
-            }
-        }
     }
 
     onKeyDown(e) {
@@ -196,6 +186,8 @@ class App {
                 case 'e': this.selectTool('eraser'); break;
                 case 'g': this.selectTool('fill'); break;
                 case 'm': this.selectTool('selector'); break;
+                case 'v': this.selectTool('move'); break;
+                case 't': this.selectTool('text'); break;
                 case '[': this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 1)); break;
                 case ']': this.state.set('brushSize', Math.min(8, this.state.get('brushSize') + 1)); break;
             }

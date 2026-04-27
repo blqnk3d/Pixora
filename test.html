@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html><body>
+<script type="module">
+import './js/app.js';
+setTimeout(() => {
+    if (window.app) {
+        console.log('App loaded');
+        console.log('Tools:', Object.keys(window.app.tools));
+        console.log('Layers:', window.app.state.get('layers').length);
+    }
+}, 1000);
+</script>
+</body></html>

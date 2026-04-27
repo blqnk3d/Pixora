@@ -88,6 +88,15 @@ export class CanvasEngine {
         });
         this.ctx.globalAlpha = 1;
 
+        if (window.app && window.app.tools) {
+            if (window.app.tools.selector && window.app.tools.selector.selection) {
+                window.app.tools.selector.drawSelection();
+            }
+            if (window.app.currentTool && window.app.currentTool.updatePreview && window.app.currentTool.previewPos) {
+                window.app.currentTool.updatePreview(window.app.currentTool.previewPos);
+            }
+        }
+
         if (this.state.get('showGrid') && zoom >= 4) {
             this.ctx.strokeStyle = 'rgba(128,128,128,0.3)';
             this.ctx.lineWidth = 1;

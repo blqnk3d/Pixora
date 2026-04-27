@@ -15,6 +15,8 @@ export class SelectorTool {
     deactivate() {
         this.isSelecting = false;
         this.startPos = null;
+        this.selection = null;
+        this.canvas.render();
     }
 
     onMouseDown(pos) {
@@ -27,6 +29,7 @@ export class SelectorTool {
         if (!this.isSelecting || !pos) return;
         this.selection.x2 = pos.x;
         this.selection.y2 = pos.y;
+        this.canvas.render();
     }
 
     onMouseUp() {
@@ -39,6 +42,30 @@ export class SelectorTool {
             x2: this.canvas.width - 1,
             y2: this.canvas.height - 1
         };
+        this.canvas.render();
+    }
+
+    drawSelection() {
+        if (!this.selection) return;
+        const { x1, y1, x2, y2 } = this.selection;
+        const zoom = this.canvas.zoom;
+        const ctx = this.canvas.ctx;
+
+        const minX = Math.min(x1, x2);
+        const maxX = Math.max(x1, x2);
+        const minY = Math.min(y1, y2);
+        const maxY = Math.max(y1, y2);
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(
+            minX * zoom + 0.5,
+            minY * zoom + 0.5,
+            (maxX - minX + 1) * zoom,
+            (maxY - minY + 1) * zoom
+        );
+        ctx.setLineDash([]);
     }
 
     getSelectedPixels() {

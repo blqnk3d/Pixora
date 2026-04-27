@@ -26,6 +26,7 @@ export class EraserTool {
         if (!this.isDrawing || !pos) return;
         this.eraseLine(this.lastPos, pos);
         this.lastPos = pos;
+        this.canvas.render();
     }
 
     onMouseUp() {
