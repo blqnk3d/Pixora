@@ -24,9 +24,8 @@ export class Toolbar {
                 <input type="number" id="brush-size" min="1" max="8" value="${this.app.state.get('brushSize')}" style="width:40px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:2px;text-align:center;font-size:11px">
             </div>
             <div id="tolerance-container" style="display:none;padding:4px;text-align:center">
-                <label style="font-size:10px;color:var(--text-secondary);display:block">Tolerance</label>
-                <input type="range" id="magic-tolerance" min="0" max="255" value="32" style="width:50px">
-                <span id="tolerance-value" style="font-size:10px;color:var(--text-primary)">32</span>
+                <label style="font-size:10px;color:var(--text-secondary);display:block;text-align:center">Tol</label>
+                <input type="number" id="magic-tolerance" min="0" max="255" value="${this.app.state.get('magicWandTolerance')}" style="width:40px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:2px;text-align:center;font-size:11px">
             </div>
         `;
 
@@ -69,14 +68,19 @@ export class Toolbar {
         }
 
         const toleranceInput = document.getElementById('magic-tolerance');
-        const toleranceValue = document.getElementById('tolerance-value');
-        if (toleranceInput && toleranceValue) {
+        if (toleranceInput) {
             toleranceInput.addEventListener('input', () => {
-                const val = parseInt(toleranceInput.value);
-                toleranceValue.textContent = val;
-                if (this.app.tools.magicSelect) {
-                    this.app.tools.magicSelect.tolerance = val;
-                }
+                let val = parseInt(toleranceInput.value) || 0;
+                val = Math.max(0, Math.min(255, val));
+                this.app.state.set('magicWandTolerance', val);
+                toleranceInput.value = val;
+            });
+            toleranceInput.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -1 : 1;
+                const newVal = Math.max(0, Math.min(255, this.app.state.get('magicWandTolerance') + delta));
+                this.app.state.set('magicWandTolerance', newVal);
+                toleranceInput.value = newVal;
             });
         }
     }

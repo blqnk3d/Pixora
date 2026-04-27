@@ -97,25 +97,44 @@ export class ColorPanel {
         const canvas = document.getElementById('sat-light-canvas');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        const w = canvas.width, h = canvas.height;
+        const w = canvas.width;
+        const h = canvas.height;
+        const imageData = ctx.createImageData(w, h);
+        const data = imageData.data;
 
         for (let y = 0; y < h; y++) {
             for (let x = 0; x < w; x++) {
                 const s = x / w * 100;
                 const l = (1 - y / h) * 100;
                 const [r, g, b] = this.hslToRgb(this.hue, s, l);
-                ctx.fillStyle = `rgb(${r},${g},${b})`;
-                ctx.fillRect(x, y, 1, 1);
+                const idx = (y * w + x) * 4;
+                data[idx] = r;
+                data[idx + 1] = g;
+                data[idx + 2] = b;
+                data[idx + 3] = 255;
             }
         }
+        ctx.putImageData(imageData, 0, 0);
     }
 
     bindEvents() {
+        this.colorInputs = {
+            r: document.getElementById('color-r'),
+            g: document.getElementById('color-g'),
+            b: document.getElementById('color-b'),
+            a: document.getElementById('color-a'),
+            hex: document.getElementById('color-hex'),
+            hue: document.getElementById('hue-slider'),
+            light: document.getElementById('light-slider'),
+            satCanvas: document.getElementById('sat-light-canvas'),
+            preview: document.getElementById('color-preview')
+        };
+
         const updateColor = () => {
-            const r = parseInt(document.getElementById('color-r').value) || 0;
-            const g = parseInt(document.getElementById('color-g').value) || 0;
-            const b = parseInt(document.getElementById('color-b').value) || 0;
-            const a = parseInt(document.getElementById('color-a').value) || 255;
+            const r = parseInt(this.colorInputs.r?.value) || 0;
+            const g = parseInt(this.colorInputs.g?.value) || 0;
+            const b = parseInt(this.colorInputs.b?.value) || 0;
+            const a = parseInt(this.colorInputs.a?.value) || 255;
             const color = [r, g, b, a];
             this.app.state.set('currentColor', color);
             this.app.state.addRecentColor(color);
@@ -124,15 +143,14 @@ export class ColorPanel {
             this.renderSatLightCanvas();
         };
 
-        ['color-r', 'color-g', 'color-b', 'color-a'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('input', updateColor);
-        });
+        if (this.colorInputs.r) this.colorInputs.r.addEventListener('input', updateColor);
+        if (this.colorInputs.g) this.colorInputs.g.addEventListener('input', updateColor);
+        if (this.colorInputs.b) this.colorInputs.b.addEventListener('input', updateColor);
+        if (this.colorInputs.a) this.colorInputs.a.addEventListener('input', updateColor);
 
-        const hexInput = document.getElementById('color-hex');
-        if (hexInput) {
-            hexInput.addEventListener('change', () => {
-                const color = this.hexToRgb(hexInput.value);
+        if (this.colorInputs.hex) {
+            this.colorInputs.hex.addEventListener('change', () => {
+                const color = this.hexToRgb(this.colorInputs.hex.value);
                 if (color) {
                     this.app.state.set('currentColor', color);
                     this.app.state.addRecentColor(color);
@@ -141,10 +159,9 @@ export class ColorPanel {
             });
         }
 
-        const hueSlider = document.getElementById('hue-slider');
-        if (hueSlider) {
-            hueSlider.addEventListener('input', () => {
-                this.hue = parseInt(hueSlider.value);
+        if (this.colorInputs.hue) {
+            this.colorInputs.hue.addEventListener('input', () => {
+                this.hue = parseInt(this.colorInputs.hue.value);
                 this.renderSatLightCanvas();
                 const [r, g, b] = this.hslToRgb(this.hue, this.saturation, this.lightness);
                 const color = [r, g, b, this.app.state.get('currentColor')[3]];
@@ -154,10 +171,9 @@ export class ColorPanel {
             });
         }
 
-        const lightSlider = document.getElementById('light-slider');
-        if (lightSlider) {
-            lightSlider.addEventListener('input', () => {
-                this.lightness = parseInt(lightSlider.value);
+        if (this.colorInputs.light) {
+            this.colorInputs.light.addEventListener('input', () => {
+                this.lightness = parseInt(this.colorInputs.light.value);
                 const [r, g, b] = this.hslToRgb(this.hue, this.saturation, this.lightness);
                 const color = [r, g, b, this.app.state.get('currentColor')[3]];
                 this.app.state.set('currentColor', color);
@@ -166,14 +182,13 @@ export class ColorPanel {
             });
         }
 
-        const satLightCanvas = document.getElementById('sat-light-canvas');
-        if (satLightCanvas) {
-            satLightCanvas.addEventListener('click', (e) => {
-                const rect = satLightCanvas.getBoundingClientRect();
+        if (this.colorInputs.satCanvas) {
+            this.colorInputs.satCanvas.addEventListener('click', (e) => {
+                const rect = this.colorInputs.satCanvas.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
-                this.saturation = x / satLightCanvas.width * 100;
-                this.lightness = (1 - y / satLightCanvas.height) * 100;
+                this.saturation = x / this.colorInputs.satCanvas.width * 100;
+                this.lightness = (1 - y / this.colorInputs.satCanvas.height) * 100;
                 const [r, g, b] = this.hslToRgb(this.hue, this.saturation, this.lightness);
                 const color = [r, g, b, this.app.state.get('currentColor')[3]];
                 this.app.state.set('currentColor', color);
@@ -199,14 +214,13 @@ export class ColorPanel {
 
     updateColorPreview() {
         const color = this.app.state.get('currentColor');
-        const preview = document.getElementById('color-preview');
-        const hexInput = document.getElementById('color-hex');
-        if (preview) preview.style.background = this.rgbToHex(color);
-        if (hexInput) hexInput.value = this.rgbToHex(color);
-        ['color-r', 'color-g', 'color-b', 'color-a'].forEach((id, i) => {
-            const el = document.getElementById(id);
-            if (el) el.value = color[i] || 0;
-        });
+        const hex = this.rgbToHex(color);
+        if (this.colorInputs.preview) this.colorInputs.preview.style.background = hex;
+        if (this.colorInputs.hex) this.colorInputs.hex.value = hex;
+        if (this.colorInputs.r) this.colorInputs.r.value = color[0] || 0;
+        if (this.colorInputs.g) this.colorInputs.g.value = color[1] || 0;
+        if (this.colorInputs.b) this.colorInputs.b.value = color[2] || 0;
+        if (this.colorInputs.a) this.colorInputs.a.value = color[3] || 255;
     }
 
     importPalette() {
@@ -269,7 +283,11 @@ export class ColorPanel {
     }
 
     rgbToHex(color) {
-        return '#' + color.slice(0, 3).map(c => c.toString(16).padStart(2, '0')).join('');
+        const hexChars = '0123456789abcdef';
+        const r = color[0], g = color[1], b = color[2];
+        return '#' + hexChars[(r >> 4) & 15] + hexChars[r & 15] +
+                     hexChars[(g >> 4) & 15] + hexChars[g & 15] +
+                     hexChars[(b >> 4) & 15] + hexChars[b & 15];
     }
 
     hexToRgb(hex) {

@@ -4,7 +4,6 @@ export class MagicSelectTool {
         this.state = state;
         this.history = history;
         this.selection = null;
-        this.tolerance = 32;
     }
 
     activate() {
@@ -28,7 +27,7 @@ export class MagicSelectTool {
             layer.pixels[idx + 3]
         ];
 
-        this.selection = this.getMagicSelection(layer, pos, targetColor, this.tolerance);
+        this.selection = this.getMagicSelection(layer, pos, targetColor, this.state.get('magicWandTolerance'));
         this.canvas.render();
     }
 
@@ -44,6 +43,7 @@ export class MagicSelectTool {
         const stack = [startPos];
 
         const result = { x1: startPos.x, y1: startPos.y, x2: startPos.x, y2: startPos.y, mask: null };
+        const toleranceSq = tolerance * tolerance;
 
         while (stack.length > 0) {
             const pos = stack.pop();
@@ -54,7 +54,7 @@ export class MagicSelectTool {
             const idx = (pos.y * width + pos.x) * 4;
             const r = layer.pixels[idx], g = layer.pixels[idx+1], b = layer.pixels[idx+2], a = layer.pixels[idx+3];
 
-            if (this.colorDistance(targetColor, [r, g, b, a]) > tolerance) continue;
+            if (this.colorDistance(targetColor, [r, g, b, a]) > toleranceSq) continue;
 
             mask[key] = 1;
             result.x1 = Math.min(result.x1, pos.x);
@@ -81,7 +81,11 @@ export class MagicSelectTool {
     }
 
     colorDistance(c1, c2) {
-        return Math.sqrt((c1[0]-c2[0])**2 + (c1[1]-c2[1])**2 + (c1[2]-c2[2])**2 + (c1[3]-c2[3])**2 * 0.25);
+        const dr = c1[0] - c2[0];
+        const dg = c1[1] - c2[1];
+        const db = c1[2] - c2[2];
+        const da = c1[3] - c2[3];
+        return dr * dr + dg * dg + db * db + da * da * 0.25;
     }
 
     drawSelection() {

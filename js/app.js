@@ -138,8 +138,8 @@ class App {
             if (this.isPanning) {
                 const dx = e.clientX - this.panStart.x;
                 const dy = e.clientY - this.panStart.y;
-                container.scrollLeft = this.scrollStart.x - dx;
-                container.scrollTop = this.scrollStart.y - dy;
+                container.scrollLeft = this.scrollStart.x + dx;
+                container.scrollTop = this.scrollStart.y + dy;
             } else {
                 if (this.currentTool && this.currentTool.onMouseMove) {
                     const pos = this.canvas.getPixelPosition(e);
@@ -181,10 +181,6 @@ class App {
         });
 
         document.addEventListener('keydown', (e) => this.onKeyDown(e));
-
-        container.addEventListener('scroll', () => {
-            this.statusBar.update();
-        });
 
         document.body.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -244,8 +240,20 @@ class App {
                 case 't': this.selectTool('text'); break;
                 case 'w': this.selectTool('magicSelect'); break;
                 case 'o': this.selectTool('ellipseSelect'); break;
-                case '[': this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 2)); break;
-                case ']': this.state.set('brushSize', Math.min(7, this.state.get('brushSize') + 2)); break;
+                case '[':
+                    if (this.state.get('currentTool') === 'magicSelect') {
+                        this.state.set('magicWandTolerance', Math.max(0, this.state.get('magicWandTolerance') - 5));
+                    } else {
+                        this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 2));
+                    }
+                    break;
+                case ']':
+                    if (this.state.get('currentTool') === 'magicSelect') {
+                        this.state.set('magicWandTolerance', Math.min(255, this.state.get('magicWandTolerance') + 5));
+                    } else {
+                        this.state.set('brushSize', Math.min(7, this.state.get('brushSize') + 2));
+                    }
+                    break;
                 case 'escape': this.deselectAll(); break;
             }
         }

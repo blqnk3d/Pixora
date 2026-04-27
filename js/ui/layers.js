@@ -183,14 +183,19 @@ export class LayersPanel {
         if (idx === 0) return;
         const target = layers[idx - 1];
         const source = layers[idx];
-        for (let i = 0; i < source.pixels.length; i += 4) {
-            if (source.pixels[i+3] > 0) {
-                target.pixels[i] = source.pixels[i];
-                target.pixels[i+1] = source.pixels[i+1];
-                target.pixels[i+2] = source.pixels[i+2];
-                target.pixels[i+3] = source.pixels[i+3];
+        const targetPixels = target.pixels;
+        const sourcePixels = source.pixels;
+        const len = sourcePixels.length;
+
+        for (let i = 0; i < len; i += 4) {
+            if (sourcePixels[i + 3] > 0) {
+                targetPixels[i] = sourcePixels[i];
+                targetPixels[i + 1] = sourcePixels[i + 1];
+                targetPixels[i + 2] = sourcePixels[i + 2];
+                targetPixels[i + 3] = sourcePixels[i + 3];
             }
         }
+        target.dirty = true;
         layers.splice(idx, 1);
         this.app.state.set('activeLayer', idx - 1);
         this.app.state.set('layers', layers);

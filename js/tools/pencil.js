@@ -40,29 +40,7 @@ export class PencilTool {
     }
 
     updatePreview(pos, e) {
-        if (this.isDrawing || !pos) return;
-        this.previewPos = pos;
-        this.canvas.render();
-        const zoom = this.canvas.zoom;
-        const size = this.state.get('brushSize');
-        const offset = Math.floor(size / 2);
-        const ctx = this.canvas.ctx;
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(
-            (pos.x - offset) * zoom,
-            (pos.y - offset) * zoom,
-            size * zoom,
-            size * zoom
-        );
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(
-            (pos.x - offset) * zoom,
-            (pos.y - offset) * zoom,
-            size * zoom,
-            size * zoom
-        );
+        // No hover preview - just store position for when render is called
     }
 
     drawPixel(pos) {

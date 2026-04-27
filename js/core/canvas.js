@@ -9,15 +9,41 @@ export class CanvasEngine {
         this.zoom = this.zoomLevels[this.zoomIndex];
         this.isDrawing = false;
         this.renderPending = false;
+        this.previewRenderPending = false;
+        this.cachedRect = null;
+        this.lastPreviewPos = { x: -1, y: -1 };
+        this.showPreview = false;
+        this.lastScrollX = 0;
+        this.lastScrollY = 0;
 
         this.ctx.imageSmoothingEnabled = false;
+        this.updateCachedRect();
+        this.setupScrollListener();
+    }
+
+    setupScrollListener() {
+        const container = document.getElementById('canvas-container');
+        if (container) {
+            container.addEventListener('scroll', () => {
+                if (container.scrollLeft !== this.lastScrollX || container.scrollTop !== this.lastScrollY) {
+                    this.lastScrollX = container.scrollLeft;
+                    this.lastScrollY = container.scrollTop;
+                    this.cachedRect = null;
+                }
+            });
+        }
+    }
+
+    updateCachedRect() {
+        this.cachedRect = this.element.getBoundingClientRect();
     }
 
     get width() { return this.state.get('canvasWidth'); }
     get height() { return this.state.get('canvasHeight'); }
 
     getPixelPosition(e) {
-        const rect = this.element.getBoundingClientRect();
+        if (!this.cachedRect) this.updateCachedRect();
+        const rect = this.cachedRect;
         const x = Math.floor((e.clientX - rect.left) / this.zoom);
         const y = Math.floor((e.clientY - rect.top) / this.zoom);
         if (x < 0 || y < 0 || x >= this.width || y >= this.height) return null;
@@ -30,6 +56,7 @@ export class CanvasEngine {
             this.zoomIndex = idx;
             this.zoom = newZoom;
         }
+        this.updateCachedRect();
         this.render();
         this.state.set('zoom', this.zoom);
     }
@@ -38,6 +65,7 @@ export class CanvasEngine {
         if (this.zoomIndex < this.zoomLevels.length - 1) {
             this.zoomIndex++;
             this.zoom = this.zoomLevels[this.zoomIndex];
+            this.updateCachedRect();
             this.render();
             this.state.set('zoom', this.zoom);
         }
@@ -47,6 +75,7 @@ export class CanvasEngine {
         if (this.zoomIndex > 0) {
             this.zoomIndex--;
             this.zoom = this.zoomLevels[this.zoomIndex];
+            this.updateCachedRect();
             this.render();
             this.state.set('zoom', this.zoom);
         }
@@ -61,14 +90,63 @@ export class CanvasEngine {
         });
     }
 
+    requestPreviewRender() {
+        if (this.previewRenderPending) return;
+        if (!this.lastPreviewPos) {
+            this.lastPreviewPos = { x: -1, y: -1 };
+        }
+        this.previewRenderPending = true;
+        requestAnimationFrame(() => {
+            this.renderPreviewOnly();
+            this.previewRenderPending = false;
+        });
+    }
+
+    renderPreviewOnly() {
+        const ctx = this.ctx;
+        const zoom = this.zoom;
+        const app = window.app;
+        if (!app || !app.currentTool || !app.currentTool.previewPos) return;
+
+        const pos = app.currentTool.previewPos;
+        const size = this.state.get('brushSize');
+        const offset = Math.floor(size / 2);
+        const previewSize = size * zoom;
+        const prevX = (pos.x - offset) * zoom;
+        const prevY = (pos.y - offset) * zoom;
+
+        if (this.lastPreviewPos.x !== -1) {
+            const lastSize = this.state.get('brushSize') * zoom;
+            const lastOffset = Math.floor(this.state.get('brushSize') / 2);
+            const clearX = (this.lastPreviewPos.x - lastOffset) * zoom;
+            const clearY = (this.lastPreviewPos.y - lastOffset) * zoom;
+            ctx.clearRect(clearX - 2, clearY - 2, lastSize + 4, lastSize + 4);
+        }
+
+        this.lastPreviewPos = { x: pos.x, y: pos.y };
+
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+    }
+
     renderNow() {
         const { width, height, zoom } = this;
-        this.element.width = width * zoom;
-        this.element.height = height * zoom;
-        this.element.style.width = width * zoom + 'px';
-        this.element.style.height = height * zoom + 'px';
+        const newWidth = width * zoom;
+        const newHeight = height * zoom;
 
-        this.ctx.clearRect(0, 0, this.element.width, this.element.height);
+        if (this.element.width !== newWidth || this.element.height !== newHeight) {
+            this.element.width = newWidth;
+            this.element.height = newHeight;
+            this.element.style.width = newWidth + 'px';
+            this.element.style.height = newHeight + 'px';
+            this.updateCachedRect();
+        }
+
+        this.ctx.clearRect(0, 0, newWidth, newHeight);
         this.ctx.imageSmoothingEnabled = false;
 
         const layers = this.state.get('layers');
@@ -79,7 +157,7 @@ export class CanvasEngine {
             if (!layer.visible) continue;
 
             if (layer.dirty || !layer.scaledCanvas || layer.lastZoom !== zoom) {
-                if (layer.dirty) {
+                if (layer.dirty && layer.offscreenCtx) {
                     const imageData = new ImageData(layer.pixels, width, height);
                     layer.offscreenCtx.putImageData(imageData, 0, 0);
                     layer.dirty = false;
@@ -99,49 +177,107 @@ export class CanvasEngine {
         }
         this.ctx.globalAlpha = 1;
 
-        if (window.app && window.app.tools) {
-            const tools = window.app.tools;
-            const selector = tools.selector;
-            if (selector && selector.selection) {
-                selector.drawSelection();
-            }
-            const magicSelect = tools.magicSelect;
-            if (magicSelect && magicSelect.selection) {
-                magicSelect.drawSelection();
-            }
-            const ellipseSelect = tools.ellipseSelect;
-            if (ellipseSelect && ellipseSelect.selection) {
-                ellipseSelect.drawSelection();
-            }
-            const currentTool = window.app.currentTool;
-            if (currentTool && currentTool.updatePreview && currentTool.previewPos) {
-                currentTool.updatePreview(currentTool.previewPos);
-            }
+        this.drawToolSelection();
+        this.drawToolPreview();
+        this.lastPreviewPos = null;
+    }
+
+    drawToolSelection() {
+        if (!window.app || !window.app.tools) return;
+        const tools = window.app.tools;
+        const selector = tools.selector;
+        if (selector && selector.selection) {
+            selector.drawSelection();
+        }
+        const magicSelect = tools.magicSelect;
+        if (magicSelect && magicSelect.selection) {
+            magicSelect.drawSelection();
+        }
+        const ellipseSelect = tools.ellipseSelect;
+        if (ellipseSelect && ellipseSelect.selection) {
+            ellipseSelect.drawSelection();
+        }
+    }
+
+    drawToolPreview() {
+        const app = window.app;
+        if (!app || !app.currentTool || !app.currentTool.previewPos) return;
+
+        const pos = app.currentTool.previewPos;
+        if (!pos) return;
+
+        const zoom = this.zoom;
+        const size = this.state.get('brushSize');
+        const offset = Math.floor(size / 2);
+        const prevX = (pos.x - offset) * zoom;
+        const prevY = (pos.y - offset) * zoom;
+        const previewSize = size * zoom;
+
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+    }
+
+    drawPreviewOnly() {
+        const app = window.app;
+        const pos = app?.currentTool?.previewPos;
+        if (!pos) return;
+
+        const zoom = this.zoom;
+        const size = this.state.get('brushSize');
+        const offset = Math.floor(size / 2);
+        const previewSize = size * zoom + 4;
+        const prevX = (pos.x - offset) * zoom - 2;
+        const prevY = (pos.y - offset) * zoom - 2;
+
+        if (this.lastPreviewPos) {
+            const lastSize = (this.lastPreviewPos.size || size) * zoom + 4;
+            const lastOffset = Math.floor((this.lastPreviewPos.size || size) / 2);
+            const clearX = (this.lastPreviewPos.x - lastOffset) * zoom - 2;
+            const clearY = (this.lastPreviewPos.y - lastOffset) * zoom - 2;
+            this.ctx.clearRect(clearX, clearY, lastSize, lastSize);
         }
 
-        if (this.state.get('showGrid') && zoom >= 4) {
-            this.ctx.strokeStyle = 'rgba(128,128,128,0.3)';
-            this.ctx.lineWidth = 1;
-            const zoomW = zoom;
-            const zoomH = zoom;
-            const scaledWidth = width * zoom;
-            const scaledHeight = height * zoom;
+        this.lastPreviewPos = { x: pos.x, y: pos.y, size };
 
-            for (let x = 0; x <= width; x++) {
-                const px = x * zoomW + 0.5;
-                this.ctx.beginPath();
-                this.ctx.moveTo(px, 0);
-                this.ctx.lineTo(px, scaledHeight);
-                this.ctx.stroke();
-            }
-            for (let y = 0; y <= height; y++) {
-                const py = y * zoomH + 0.5;
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, py);
-                this.ctx.lineTo(scaledWidth, py);
-                this.ctx.stroke();
-            }
+        const drawX = (pos.x - offset) * zoom;
+        const drawY = (pos.y - offset) * zoom;
+
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(drawX, drawY, size * zoom, size * zoom);
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(drawX, drawY, size * zoom, size * zoom);
+    }
+
+    showPreviewAt(x, y) {
+        if (this.lastPreviewPos) {
+            const lastSize = (this.lastPreviewPos.size || this.state.get('brushSize')) * this.zoom;
+            const lastOffset = Math.floor((this.lastPreviewPos.size || this.state.get('brushSize')) / 2);
+            const lx = (this.lastPreviewPos.x - lastOffset) * this.zoom - 2;
+            const ly = (this.lastPreviewPos.y - lastOffset) * this.zoom - 2;
+            this.ctx.clearRect(lx, ly, lastSize + 4, lastSize + 4);
         }
+
+        const zoom = this.zoom;
+        const size = this.state.get('brushSize');
+        const offset = Math.floor(size / 2);
+        const px = (x - offset) * zoom;
+        const py = (y - offset) * zoom;
+        const s = size * zoom;
+
+        this.lastPreviewPos = { x, y, size };
+
+        this.ctx.strokeStyle = '#000000';
+        this.ctx.lineWidth = 3;
+        this.ctx.strokeRect(px, py, s, s);
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 1;
+        this.ctx.strokeRect(px, py, s, s);
     }
 
     setPixel(x, y, color, layerIndex = null) {

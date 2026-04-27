@@ -2,6 +2,12 @@ export class StatusBar {
     constructor(app) {
         this.app = app;
         this.element = document.getElementById('status-bar');
+        this.cursorPosEl = null;
+        this.zoomLevelEl = null;
+        this.canvasSizeEl = null;
+        this.toolNameEl = null;
+        this.pendingPos = null;
+        this.frameRequested = false;
         this.render();
     }
 
@@ -25,12 +31,23 @@ export class StatusBar {
                 <span id="tool-name">${formattedName}</span>
             </div>
         `;
+        this.cursorPosEl = document.getElementById('cursor-pos');
+        this.zoomLevelEl = document.getElementById('zoom-level');
+        this.canvasSizeEl = document.getElementById('canvas-size');
+        this.toolNameEl = document.getElementById('tool-name');
     }
 
     updatePosition(pos) {
-        const posEl = document.getElementById('cursor-pos');
-        if (posEl) {
-            posEl.textContent = pos ? `${pos.x}, ${pos.y}` : '---';
+        this.pendingPos = pos;
+        if (!this.frameRequested) {
+            this.frameRequested = true;
+            requestAnimationFrame(() => {
+                if (this.cursorPosEl && this.pendingPos) {
+                    this.cursorPosEl.textContent = `${this.pendingPos.x}, ${this.pendingPos.y}`;
+                }
+                this.frameRequested = false;
+                this.pendingPos = null;
+            });
         }
     }
 

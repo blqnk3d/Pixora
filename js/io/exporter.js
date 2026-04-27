@@ -1,28 +1,36 @@
 export class Exporter {
     constructor(app) {
         this.app = app;
+        this.exportCanvas = null;
+        this.exportCtx = null;
+    }
+
+    getExportCanvas() {
+        const width = this.app.canvas.width;
+        const height = this.app.canvas.height;
+        if (!this.exportCanvas || this.exportCanvas.width !== width || this.exportCanvas.height !== height) {
+            this.exportCanvas = new OffscreenCanvas(width, height);
+            this.exportCtx = this.exportCanvas.getContext('2d');
+            this.exportCtx.imageSmoothingEnabled = false;
+        }
+        this.exportCtx.clearRect(0, 0, width, height);
+        return { canvas: this.exportCanvas, ctx: this.exportCtx };
     }
 
     savePNG() {
-        const canvas = document.createElement('canvas');
-        canvas.width = this.app.canvas.width;
-        canvas.height = this.app.canvas.height;
-        const ctx = canvas.getContext('2d');
-        ctx.imageSmoothingEnabled = false;
-
+        const { canvas, ctx } = this.getExportCanvas();
+        const width = canvas.width;
+        const height = canvas.height;
         const layers = this.app.state.get('layers');
-        layers.forEach(layer => {
-            if (!layer.visible) return;
-            const imageData = ctx.createImageData(canvas.width, canvas.height);
+
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            if (!layer.visible) continue;
+            const imageData = ctx.createImageData(width, height);
             imageData.data.set(layer.pixels);
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = canvas.width;
-            tempCanvas.height = canvas.height;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.putImageData(imageData, 0, 0);
+            ctx.putImageData(imageData, 0, 0);
             ctx.globalAlpha = layer.opacity ?? 1;
-            ctx.drawImage(tempCanvas, 0, 0);
-        });
+        }
 
         canvas.toBlob(blob => {
             const url = URL.createObjectURL(blob);
