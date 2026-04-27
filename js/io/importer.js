@@ -21,8 +21,8 @@ export class Importer {
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
-                const width = img.width;
-                const height = img.height;
+                const width = img.naturalWidth || img.width;
+                const height = img.naturalHeight || img.height;
 
                 this.app.state.initCanvas(width, height);
 
@@ -30,11 +30,13 @@ export class Importer {
                 tempCanvas.width = width;
                 tempCanvas.height = height;
                 const tempCtx = tempCanvas.getContext('2d');
-                tempCtx.drawImage(img, 0, 0);
+                tempCtx.drawImage(img, 0, 0, width, height);
 
                 const imageData = tempCtx.getImageData(0, 0, width, height);
                 const layer = this.app.state.get('layers')[0];
-                layer.pixels = imageData.data;
+                layer.pixels = new Uint8ClampedArray(imageData.data);
+                layer.dirty = true;
+                layer.scaledCanvas = null;
 
                 this.app.canvas.render();
                 this.app.layersPanel.render();

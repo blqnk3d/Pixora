@@ -3,6 +3,7 @@ export class LayersPanel {
         this.app = app;
         this.element = document.getElementById('layers-panel');
         this.contextMenu = null;
+        this.dragSrcIdx = null;
         this.render();
     }
 
@@ -14,7 +15,7 @@ export class LayersPanel {
             <div class="panel-title">Layers</div>
             <div id="layers-list">
                 ${layers.map((layer, i) => `
-                    <div class="layer-item ${i === activeIdx ? 'active' : ''}" data-index="${i}">
+                    <div class="layer-item ${i === activeIdx ? 'active' : ''}" data-index="${i}" draggable="true">
                         <span class="layer-visibility" data-index="${i}" data-action="toggle-visibility">
                             ${layer.visible ? 'V' : 'X'}
                         </span>
@@ -45,6 +46,40 @@ export class LayersPanel {
                 e.preventDefault();
                 const idx = parseInt(item.dataset.index);
                 this.showContextMenu(e.clientX, e.clientY, idx);
+            });
+
+            item.addEventListener('dragstart', (e) => {
+                this.dragSrcIdx = parseInt(item.dataset.index);
+                item.style.opacity = '0.5';
+            });
+
+            item.addEventListener('dragend', () => {
+                item.style.opacity = '1';
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                item.style.borderTop = '2px solid var(--accent)';
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.style.borderTop = '';
+            });
+
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                item.style.borderTop = '';
+                const dstIdx = parseInt(item.dataset.index);
+                if (this.dragSrcIdx !== null && this.dragSrcIdx !== dstIdx) {
+                    const layers = this.app.state.get('layers');
+                    const [moved] = layers.splice(this.dragSrcIdx, 1);
+                    layers.splice(dstIdx, 0, moved);
+                    this.app.state.set('activeLayer', dstIdx);
+                    this.app.state.set('layers', layers);
+                    this.app.canvas.render();
+                    this.render();
+                }
+                this.dragSrcIdx = null;
             });
         });
 

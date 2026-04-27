@@ -42,6 +42,11 @@ export class MenuBar {
                     <div class="menu-dropdown-item" data-action="remove-layer">Remove Layer</div>
                     <div class="menu-dropdown-item" data-action="duplicate-layer">Duplicate Layer</div>
                     <div class="menu-dropdown-item" data-action="merge-down">Merge Down</div>
+                    <div class="menu-dropdown-item" data-action="scale-50">Scale 50%</div>
+                    <div class="menu-dropdown-item" data-action="scale-200">Scale 200%</div>
+                    <div class="menu-dropdown-item" data-action="rotate-90">Rotate 90°</div>
+                    <div class="menu-dropdown-item" data-action="rotate-180">Rotate 180°</div>
+                    <div class="menu-dropdown-item" data-action="crop-selection">Crop to Selection</div>
                 </div>
             </div>
             <div class="menu-item">
@@ -87,6 +92,11 @@ export class MenuBar {
             case 'remove-layer': this.removeLayer(); break;
             case 'duplicate-layer': this.duplicateLayer(); break;
             case 'merge-down': this.mergeDown(); break;
+            case 'scale-50': app.tools.move.scaleLayer(0.5, 0.5); break;
+            case 'scale-200': app.tools.move.scaleLayer(2, 2); break;
+            case 'rotate-90': app.tools.move.rotateLayer(90); break;
+            case 'rotate-180': app.tools.move.rotateLayer(180); break;
+            case 'crop-selection': this.cropSelection(); break;
             case 'remove-bg': app.history.push(); app.importer.removeBackground(); break;
         }
     }
@@ -160,6 +170,13 @@ export class MenuBar {
         const activeIdx = this.app.state.get('activeLayer');
         layers[activeIdx].pixels.fill(0);
         this.app.canvas.render();
+    }
+
+    cropSelection() {
+        const sel = this.app.tools.selector.selection;
+        if (!sel) return;
+        const { x1, y1, x2, y2 } = sel;
+        this.app.tools.move.cropLayer(x1, y1, x2, y2);
     }
 
     addLayer() {

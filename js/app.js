@@ -3,7 +3,7 @@ import { State } from './core/state.js';
 import { History } from './core/history.js';
 import { MenuBar } from './ui/menu.js';
 import { Toolbar } from './ui/toolbar.js';
-import { ColorPanel } from './ui/colorpicker.js';
+import { ColorPanel } from './ui/colorpicker-simple.js';
 import { LayersPanel } from './ui/layers.js';
 import { StatusBar } from './ui/statusbar.js';
 import { Exporter } from './io/exporter.js';
@@ -12,6 +12,8 @@ import { PencilTool } from './tools/pencil.js';
 import { EraserTool } from './tools/eraser.js';
 import { FillTool } from './tools/fill.js';
 import { SelectorTool } from './tools/selector.js';
+import { TransformTool } from './tools/transform.js';
+import { TextTool } from './tools/text.js';
 
 class App {
     constructor() {
@@ -23,7 +25,9 @@ class App {
             pencil: new PencilTool(this.canvas, this.state),
             eraser: new EraserTool(this.canvas, this.state),
             fill: new FillTool(this.canvas, this.state),
-            selector: new SelectorTool(this.canvas, this.state, this.history)
+            selector: new SelectorTool(this.canvas, this.state, this.history),
+            move: new TransformTool(this.canvas, this.state, this.history),
+            text: new TextTool(this.canvas, this.state, this.history)
         };
 
         this.currentTool = this.tools.pencil;
@@ -41,9 +45,10 @@ class App {
 
     init() {
         this.state.initCanvas(32, 32);
-        this.canvas.render();
         this.bindEvents();
         this.selectTool('pencil');
+        this.canvas.render();
+        this.layersPanel.render();
     }
 
     selectTool(name) {
@@ -61,11 +66,46 @@ class App {
     bindEvents() {
         const canvasEl = this.canvas.element;
         const container = document.getElementById('canvas-container');
+        this.isPanning = false;
+        this.panStart = null;
+        this.scrollStart = null;
 
-        canvasEl.addEventListener('mousedown', (e) => this.onCanvasMouseDown(e));
-        canvasEl.addEventListener('mousemove', (e) => this.onCanvasMouseMove(e));
-        canvasEl.addEventListener('mouseup', (e) => this.onCanvasMouseUp(e));
-        canvasEl.addEventListener('mouseleave', () => this.onCanvasMouseUp());
+        canvasEl.addEventListener('mousedown', (e) => {
+            if (e.button === 1) {
+                e.preventDefault();
+                this.isPanning = true;
+                this.panStart = { x: e.clientX, y: e.clientY };
+                this.scrollStart = { x: container.scrollLeft, y: container.scrollTop };
+                canvasEl.style.cursor = 'grab';
+            } else {
+                this.onCanvasMouseDown(e);
+            }
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (this.isPanning) {
+                const dx = e.clientX - this.panStart.x;
+                const dy = e.clientY - this.panStart.y;
+                container.scrollLeft = this.scrollStart.x - dx;
+                container.scrollTop = this.scrollStart.y - dy;
+            } else if (this.currentTool && this.currentTool.onMouseMove) {
+                const pos = this.canvas.getPixelPosition(e);
+                this.statusBar.updatePosition(pos);
+                if (pos && this.currentTool.isDrawing) {
+                    this.currentTool.onMouseMove(pos, e);
+                }
+            }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+            if (e.button === 1 && this.isPanning) {
+                this.isPanning = false;
+                canvasEl.style.cursor = '';
+            } else {
+                this.onCanvasMouseUp(e);
+            }
+        });
+
         canvasEl.addEventListener('wheel', (e) => this.onWheel(e));
 
         document.addEventListener('keydown', (e) => this.onKeyDown(e));
@@ -111,10 +151,13 @@ class App {
     }
 
     onWheel(e) {
-        if (e.ctrlKey) {
+        if (e.ctrlKey || e.metaKey) {
             e.preventDefault();
-            const delta = e.deltaY > 0 ? -1 : 1;
-            this.canvas.setZoom(this.canvas.zoom + delta * 0.1);
+            if (e.deltaY > 0) {
+                this.canvas.zoomOut();
+            } else {
+                this.canvas.zoomIn();
+            }
         }
     }
 
