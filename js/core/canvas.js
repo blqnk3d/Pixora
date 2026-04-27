@@ -5,9 +5,10 @@ export class CanvasEngine {
         this.state = state;
         this.history = history;
         this.zoomLevels = [1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 48, 64];
-        this.zoomIndex = 6; // Default to 10x
+        this.zoomIndex = 6;
         this.zoom = this.zoomLevels[this.zoomIndex];
         this.isDrawing = false;
+        this.renderPending = false;
 
         this.ctx.imageSmoothingEnabled = false;
     }
@@ -52,6 +53,15 @@ export class CanvasEngine {
     }
 
     render() {
+        if (this.renderPending) return;
+        this.renderPending = true;
+        requestAnimationFrame(() => {
+            this.renderNow();
+            this.renderPending = false;
+        });
+    }
+
+    renderNow() {
         const { width, height, zoom } = this;
         this.element.width = width * zoom;
         this.element.height = height * zoom;
@@ -59,6 +69,7 @@ export class CanvasEngine {
         this.element.style.height = height * zoom + 'px';
 
         this.ctx.clearRect(0, 0, this.element.width, this.element.height);
+        this.ctx.imageSmoothingEnabled = false;
 
         const layers = this.state.get('layers');
 
@@ -136,15 +147,6 @@ export class CanvasEngine {
         return oldColor;
     }
 
-    getPixel(x, y, layerIndex = null) {
-        const layerIdx = layerIndex ?? this.state.get('activeLayer');
-        const layer = this.state.get('layers')[layerIdx];
-        if (!layer) return [0, 0, 0, 0];
-
-        const idx = (y * this.width + x) * 4;
-        return [layer.pixels[idx], layer.pixels[idx+1], layer.pixels[idx+2], layer.pixels[idx+3]];
-    }
-
     resizeCanvas(newWidth, newHeight) {
         const layers = this.state.get('layers');
         layers.forEach(layer => {
@@ -160,6 +162,8 @@ export class CanvasEngine {
                 }
             }
             layer.pixels = newPixels;
+            layer.dirty = true;
+            layer.scaledCanvas = null;
         });
         this.state.set('canvasWidth', newWidth);
         this.state.set('canvasHeight', newHeight);

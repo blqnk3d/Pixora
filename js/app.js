@@ -96,11 +96,13 @@ class App {
                 if (this.currentTool && this.currentTool.onMouseMove) {
                     const pos = this.canvas.getPixelPosition(e);
                     this.statusBar.updatePosition(pos);
-                    if (pos && this.currentTool.isDrawing) {
+                    if (pos) {
                         this.currentTool.onMouseMove(pos, e);
-                        this.canvas.render();
+                        if (this.currentTool.isDrawing || (this.currentTool.isSelecting && this.currentTool.selection)) {
+                            this.canvas.render();
+                        }
                     }
-                    if (this.currentTool.updatePreview) {
+                    if (this.currentTool.updatePreview && !this.currentTool.isDrawing && !this.currentTool.isSelecting) {
                         this.currentTool.updatePreview(pos, e);
                     }
                 }
@@ -170,14 +172,16 @@ class App {
                     e.preventDefault();
                     if (e.shiftKey) this.history.redo();
                     else this.history.undo();
+                    this.canvas.render();
                     break;
                 case 'y':
                     e.preventDefault();
                     this.history.redo();
+                    this.canvas.render();
                     break;
                 case 'a':
                     e.preventDefault();
-                    this.tools.selector.selectAll(this.canvas);
+                    this.tools.selector.selectAll();
                     break;
             }
         } else {

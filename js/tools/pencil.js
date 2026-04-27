@@ -46,7 +46,10 @@ export class PencilTool {
         const size = this.state.get('brushSize');
         const offset = Math.floor(size / 2);
         const ctx = this.canvas.ctx;
-        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        const color = this.state.get('currentColor');
+        const brightness = (color[0] + color[1] + color[2]) / 3;
+        const previewColor = brightness > 128 ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.8)';
+        ctx.strokeStyle = previewColor;
         ctx.lineWidth = 1;
         ctx.strokeRect(
             (pos.x - offset) * zoom,

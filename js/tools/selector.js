@@ -56,12 +56,21 @@ export class SelectorTool {
         const minY = Math.min(y1, y2);
         const maxY = Math.max(y1, y2);
 
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([]);
+        ctx.strokeRect(
+            minX * zoom,
+            minY * zoom,
+            (maxX - minX + 1) * zoom,
+            (maxY - minY + 1) * zoom
+        );
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
         ctx.strokeRect(
-            minX * zoom + 0.5,
-            minY * zoom + 0.5,
+            minX * zoom,
+            minY * zoom,
             (maxX - minX + 1) * zoom,
             (maxY - minY + 1) * zoom
         );
