@@ -78,7 +78,8 @@ export class State {
 
     addRecentColor(color) {
         const key = color.join(',');
-        this.state.recentColors = this.state.recentColors.filter(c => c.join(",") !== key).slice(0, 15);
+        this.state.recentColors = this.state.recentColors.filter(c => c.join(",") !== key);
         this.state.recentColors.unshift([...color]);
+        this.state.recentColors = this.state.recentColors.slice(0, 15);
     }
 }

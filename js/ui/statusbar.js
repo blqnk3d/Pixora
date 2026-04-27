@@ -6,6 +6,8 @@ export class StatusBar {
     }
 
     render() {
+        const toolName = this.app.state.get('currentTool');
+        const formattedName = toolName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
         this.element.innerHTML = `
             <div class="status-item">
                 <span>Pos:</span>
@@ -20,7 +22,7 @@ export class StatusBar {
                 <span id="canvas-size">${this.app.canvas.width} × ${this.app.canvas.height}</span>
             </div>
             <div class="status-item" style="margin-left:auto">
-                <span id="tool-name">${this.app.state.get('currentTool')}</span>
+                <span id="tool-name">${formattedName}</span>
             </div>
         `;
     }

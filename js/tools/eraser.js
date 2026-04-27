@@ -1,7 +1,8 @@
 export class EraserTool {
-    constructor(canvas, state) {
+    constructor(canvas, state, history) {
         this.canvas = canvas;
         this.state = state;
+        this.history = history;
         this.isDrawing = false;
         this.lastPos = null;
     }
@@ -18,7 +19,7 @@ export class EraserTool {
     onMouseDown(pos) {
         this.isDrawing = true;
         this.lastPos = pos;
-        window.app.history.beginStroke();
+        this.history.beginStroke();
         this.erasePixel(pos);
     }
 
@@ -32,7 +33,7 @@ export class EraserTool {
     onMouseUp() {
         this.isDrawing = false;
         this.lastPos = null;
-        window.app.history.endStroke();
+        this.history.endStroke();
     }
 
     erasePixel(pos) {

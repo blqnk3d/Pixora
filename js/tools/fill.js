@@ -1,7 +1,8 @@
 export class FillTool {
-    constructor(canvas, state) {
+    constructor(canvas, state, history) {
         this.canvas = canvas;
         this.state = state;
+        this.history = history;
     }
 
     activate() {
@@ -13,7 +14,9 @@ export class FillTool {
     onMouseDown(pos) {
         const color = this.state.get('currentColor');
         const layerIdx = this.state.get('activeLayer');
-        const layer = this.state.get('layers')[layerIdx];
+        const layers = this.state.get('layers');
+        if (!layers || layerIdx === undefined || !layers[layerIdx]) return;
+        const layer = layers[layerIdx];
         const width = this.canvas.width;
         const height = this.canvas.height;
         const startX = pos.x;
@@ -23,10 +26,12 @@ export class FillTool {
 
         if (this.colorsEqual(targetColor, color)) return;
 
-        window.app.history.beginStroke();
+        this.history.beginStroke();
         this.floodFill(layer, width, height, startX, startY, targetColor, color);
+        layer.dirty = true;
+        layer.scaledCanvas = null;
         this.canvas.render();
-        window.app.history.endStroke();
+        this.history.endStroke();
     }
 
     onMouseMove() {}
@@ -62,9 +67,6 @@ export class FillTool {
             pixels[pIdx+1] = f1;
             pixels[pIdx+2] = f2;
             pixels[pIdx+3] = f3;
-
-            layer.dirty = true;
-            layer.scaledCanvas = null;
 
             stack.push([x+1, y], [x-1, y], [x, y+1], [x, y-1]);
         }

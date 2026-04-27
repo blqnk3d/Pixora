@@ -201,6 +201,8 @@ export class LayersPanel {
     clearLayer(idx) {
         const layers = this.app.state.get('layers');
         layers[idx].pixels.fill(0);
+        layers[idx].dirty = true;
+        this.app.state.set('layers', layers);
         this.app.canvas.render();
     }
 }

@@ -8,7 +8,6 @@ export class Toolbar {
             { name: 'fill', icon: 'F', title: 'Fill (G)' },
             { name: 'selector', icon: 'S', title: 'Select (M)' },
             { name: 'magicSelect', icon: 'W', title: 'Magic Select (W)' },
-            { name: 'ellipseSelect', icon: 'O', title: 'Ellipse Select (E)' },
             { name: 'move', icon: 'M', title: 'Move (V)' },
             { name: 'text', icon: 'T', title: 'Text (T)' }
         ];
@@ -43,8 +42,7 @@ export class Toolbar {
             btn.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const currentTool = this.app.state.get('currentTool');
-                const tool = this.app.tools[currentTool];
-                if (tool && (currentTool === 'pencil' || currentTool === 'eraser')) {
+                if (currentTool === 'pencil' || currentTool === 'eraser') {
                     const delta = e.deltaY > 0 ? -1 : 1;
                     const newSize = Math.max(1, Math.min(8, this.app.state.get('brushSize') + delta));
                     this.app.state.set('brushSize', newSize);
@@ -64,7 +62,7 @@ export class Toolbar {
             brushInput.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const delta = e.deltaY > 0 ? -2 : 2;
-                const newSize = Math.max(1, Math.min(7, this.app.state.get('brushSize') + delta));
+                const newSize = Math.max(1, Math.min(8, this.app.state.get('brushSize') + delta));
                 this.app.state.set('brushSize', newSize);
                 brushInput.value = newSize;
             });

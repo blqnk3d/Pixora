@@ -20,7 +20,7 @@ export class Exporter {
             tempCanvas.height = canvas.height;
             const tempCtx = tempCanvas.getContext('2d');
             tempCtx.putImageData(imageData, 0, 0);
-            ctx.globalAlpha = layer.opacity;
+            ctx.globalAlpha = layer.opacity ?? 1;
             ctx.drawImage(tempCanvas, 0, 0);
         });
 
@@ -30,7 +30,7 @@ export class Exporter {
             a.href = url;
             a.download = 'pixel-art.png';
             a.click();
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }, 'image/png');
     }
 

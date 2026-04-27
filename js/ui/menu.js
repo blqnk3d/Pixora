@@ -84,7 +84,7 @@ export class MenuBar {
                 const isRetro = !app.state.get('retroFont');
                 app.state.set('retroFont', isRetro);
                 document.body.classList.toggle('retro-font', isRetro);
-                localStorage.setItem('pixora-retro-font', isRetro);
+                localStorage.setItem('prity-retro-font', isRetro);
                 const link = document.getElementById('retro-font-link');
                 if (link) link.style.display = isRetro ? 'block' : 'none';
                 break;
@@ -92,12 +92,12 @@ export class MenuBar {
             case 'remove-layer': this.removeLayer(); break;
             case 'duplicate-layer': this.duplicateLayer(); break;
             case 'merge-down': this.mergeDown(); break;
-            case 'scale-50': app.tools.move.scaleLayer(0.5, 0.5); break;
-            case 'scale-200': app.tools.move.scaleLayer(2, 2); break;
-            case 'rotate-90': app.tools.move.rotateLayer(90); break;
-            case 'rotate-180': app.tools.move.rotateLayer(180); break;
+            case 'scale-50': if (app.tools.move?.scaleLayer) app.tools.move.scaleLayer(0.5, 0.5); break;
+            case 'scale-200': if (app.tools.move?.scaleLayer) app.tools.move.scaleLayer(2, 2); break;
+            case 'rotate-90': if (app.tools.move?.rotateLayer) app.tools.move.rotateLayer(90); break;
+            case 'rotate-180': if (app.tools.move?.rotateLayer) app.tools.move.rotateLayer(180); break;
             case 'crop-selection': this.cropSelection(); break;
-            case 'remove-bg': app.history.push(); app.importer.removeBackground(); break;
+            case 'remove-bg': app.history.beginStroke(); app.importer.removeBackground(); app.history.endStroke(); break;
         }
     }
 
@@ -176,7 +176,7 @@ export class MenuBar {
         const sel = this.app.tools.selector.selection;
         if (!sel) return;
         const { x1, y1, x2, y2 } = sel;
-        this.app.tools.move.cropLayer(x1, y1, x2, y2);
+        if (this.app.tools.move?.cropLayer) this.app.tools.move.cropLayer(x1, y1, x2, y2);
     }
 
     addLayer() {

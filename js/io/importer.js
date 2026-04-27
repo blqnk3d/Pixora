@@ -33,7 +33,9 @@ export class Importer {
                 tempCtx.drawImage(img, 0, 0, width, height);
 
                 const imageData = tempCtx.getImageData(0, 0, width, height);
-                const layer = this.app.state.get('layers')[0];
+                const layers = this.app.state.get('layers');
+                if (!layers || layers.length === 0) return;
+                const layer = layers[0];
                 layer.pixels = new Uint8ClampedArray(imageData.data);
                 layer.dirty = true;
                 layer.scaledCanvas = null;
@@ -49,6 +51,7 @@ export class Importer {
     removeBackground() {
         const layers = this.app.state.get('layers');
         const activeIdx = this.app.state.get('activeLayer');
+        if (!layers || layers.length === 0 || activeIdx < 0 || activeIdx >= layers.length) return;
         const layer = layers[activeIdx];
         const width = this.app.canvas.width;
         const height = this.app.canvas.height;

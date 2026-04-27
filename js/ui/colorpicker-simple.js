@@ -33,7 +33,7 @@ export class ColorPanel {
                 </div>
             </div>
             <div class="panel-title">Color Picker</div>
-            <canvas id="color-picker-canvas" width="200" height="150" style="width:100%;border:1px solid var(--border);cursor:crosshair;display:block"></canvas>
+            <canvas id="color-picker-canvas" width="200" height="150" style="border:1px solid var(--border);cursor:crosshair;display:block;max-width:100%"></canvas>
             <div class="panel-title" style="margin-top:8px">Palette</div>
             <div class="palette" id="palette-grid">
                 ${palette.map(c => `<div class="palette-color" data-color="${c.join(',')}" style="background:${this.rgbToHex(c)}"></div>`).join('')}

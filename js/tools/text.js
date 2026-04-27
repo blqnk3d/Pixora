@@ -77,9 +77,39 @@ export class TextTool {
 
         this.history.beginStroke();
 
-        const ctx = this.canvas.element.getContext('2d');
         const zoom = this.canvas.zoom;
         const fontFamily = getComputedStyle(document.documentElement).getPropertyValue('--font-family').trim() || 'Arial';
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+        const activeLayer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width * zoom;
+        tempCanvas.height = height * zoom;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        const imageData = ctx.createImageData(tempCanvas.width, tempCanvas.height);
+        const layerPixels = activeLayer.pixels;
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const srcIdx = (y * width + x) * 4;
+                const dstIdx = (y * zoom * tempCanvas.width + x * zoom) * 4;
+                for (let dy = 0; dy < zoom; dy++) {
+                    for (let dx = 0; dx < zoom; dx++) {
+                        const px = x * zoom + dx;
+                        const py = y * zoom + dy;
+                        const pIdx = (py * tempCanvas.width + px) * 4;
+                        imageData.data[pIdx] = layerPixels[srcIdx];
+                        imageData.data[pIdx + 1] = layerPixels[srcIdx + 1];
+                        imageData.data[pIdx + 2] = layerPixels[srcIdx + 2];
+                        imageData.data[pIdx + 3] = layerPixels[srcIdx + 3];
+                    }
+                }
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+
         ctx.font = `${12 * zoom}px ${fontFamily}`;
         ctx.fillStyle = `rgb(${this.state.get('currentColor').slice(0,3).join(',')})`;
         ctx.imageSmoothingEnabled = false;
@@ -90,8 +120,7 @@ export class TextTool {
             ctx.fillText(line, this.currentPos.x * zoom, (this.currentPos.y + i) * zoom + lineHeight);
         });
 
-        const layer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];
-        const imageData = ctx.getImageData(0, 0, this.canvas.element.width, this.canvas.element.height);
+        const textImageData = ctx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
         const startX = this.currentPos.x * zoom;
         const startY = this.currentPos.y * zoom;
         const endX = startX + 200;
@@ -99,23 +128,23 @@ export class TextTool {
 
         for (let y = Math.floor(startY); y < Math.min(endY, this.canvas.height * zoom); y++) {
             for (let x = Math.floor(startX); x < Math.min(endX, this.canvas.width * zoom); x++) {
-                const srcIdx = (y * this.canvas.element.width + x) * 4;
+                const srcIdx = (y * tempCanvas.width + x) * 4;
                 const dstX = Math.floor(x / zoom);
                 const dstY = Math.floor(y / zoom);
                 if (dstX >= 0 && dstX < this.canvas.width && dstY >= 0 && dstY < this.canvas.height) {
                     const dstIdx = (dstY * this.canvas.width + dstX) * 4;
-                    if (imageData.data[srcIdx + 3] > 0) {
-                        layer.pixels[dstIdx] = imageData.data[srcIdx];
-                        layer.pixels[dstIdx+1] = imageData.data[srcIdx+1];
-                        layer.pixels[dstIdx+2] = imageData.data[srcIdx+2];
-                        layer.pixels[dstIdx+3] = imageData.data[srcIdx+3];
+                    if (textImageData.data[srcIdx + 3] > 0) {
+                        activeLayer.pixels[dstIdx] = textImageData.data[srcIdx];
+                        activeLayer.pixels[dstIdx+1] = textImageData.data[srcIdx+1];
+                        activeLayer.pixels[dstIdx+2] = textImageData.data[srcIdx+2];
+                        activeLayer.pixels[dstIdx+3] = textImageData.data[srcIdx+3];
                     }
                 }
             }
         }
 
-        layer.dirty = true;
-        layer.scaledCanvas = null;
+        activeLayer.dirty = true;
+        activeLayer.scaledCanvas = null;
         this.canvas.render();
         this.history.endStroke();
         this.cancelText();

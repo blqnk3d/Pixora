@@ -1,7 +1,8 @@
 export class PencilTool {
-    constructor(canvas, state) {
+    constructor(canvas, state, history) {
         this.canvas = canvas;
         this.state = state;
+        this.history = history;
         this.isDrawing = false;
         this.lastPos = null;
         this.previewPos = null;
@@ -21,7 +22,7 @@ export class PencilTool {
     onMouseDown(pos) {
         this.isDrawing = true;
         this.lastPos = pos;
-        window.app.history.beginStroke();
+        this.history.beginStroke();
         this.drawPixel(pos);
     }
 
@@ -35,7 +36,7 @@ export class PencilTool {
     onMouseUp() {
         this.isDrawing = false;
         this.lastPos = null;
-        window.app.history.endStroke();
+        this.history.endStroke();
     }
 
     updatePreview(pos, e) {

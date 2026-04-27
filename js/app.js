@@ -24,9 +24,9 @@ class App {
         this.canvas = new CanvasEngine('pixel-canvas', this.state, this.history);
 
         this.tools = {
-            pencil: new PencilTool(this.canvas, this.state),
-            eraser: new EraserTool(this.canvas, this.state),
-            fill: new FillTool(this.canvas, this.state),
+            pencil: new PencilTool(this.canvas, this.state, this.history),
+            eraser: new EraserTool(this.canvas, this.state, this.history),
+            fill: new FillTool(this.canvas, this.state, this.history),
             selector: new SelectorTool(this.canvas, this.state, this.history),
             move: new TransformTool(this.canvas, this.state, this.history),
             text: new TextTool(this.canvas, this.state, this.history),

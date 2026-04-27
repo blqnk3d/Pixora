@@ -86,8 +86,8 @@ export class SelectorTool {
         const height = maxY - minY + 1;
         const pixels = new Uint8ClampedArray(width * height * 4);
         const canvasWidth = this.canvas.width;
-        const activeLayer = this.canvas.state.get('activeLayer');
-        const layer = this.canvas.state.get('layers')[activeLayer];
+        const activeLayer = this.state.get('activeLayer');
+        const layer = this.state.get('layers')[activeLayer];
         const layerPixels = layer.pixels;
 
         for (let y = minY; y <= maxY; y++) {

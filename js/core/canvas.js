@@ -5,7 +5,7 @@ export class CanvasEngine {
         this.state = state;
         this.history = history;
         this.zoomLevels = [1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 48, 64];
-        this.zoomIndex = 6;
+        this.zoomIndex = 5;
         this.zoom = this.zoomLevels[this.zoomIndex];
         this.isDrawing = false;
         this.renderPending = false;
