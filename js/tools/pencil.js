@@ -49,10 +49,10 @@ export class PencilTool {
         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
         ctx.lineWidth = 1;
         ctx.strokeRect(
-            (pos.x - offset) * zoom - 0.5,
-            (pos.y - offset) * zoom - 0.5,
-            size * zoom + 1,
-            size * zoom + 1
+            (pos.x - offset) * zoom,
+            (pos.y - offset) * zoom,
+            size * zoom,
+            size * zoom
         );
     }
 

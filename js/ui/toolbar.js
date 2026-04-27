@@ -49,12 +49,15 @@ export class Toolbar {
         const brushInput = document.getElementById('brush-size');
         if (brushInput) {
             brushInput.addEventListener('input', () => {
-                this.app.state.set('brushSize', parseInt(brushInput.value) || 1);
+                let val = parseInt(brushInput.value) || 1;
+                if (val % 2 === 0) val = Math.max(1, val - 1);
+                this.app.state.set('brushSize', val);
+                brushInput.value = val;
             });
             brushInput.addEventListener('wheel', (e) => {
                 e.preventDefault();
-                const delta = e.deltaY > 0 ? -1 : 1;
-                const newSize = Math.max(1, Math.min(8, this.app.state.get('brushSize') + delta));
+                const delta = e.deltaY > 0 ? -2 : 2;
+                const newSize = Math.max(1, Math.min(7, this.app.state.get('brushSize') + delta));
                 this.app.state.set('brushSize', newSize);
                 brushInput.value = newSize;
             });

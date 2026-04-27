@@ -13,7 +13,10 @@ export class History {
             name: layer.name,
             pixels: new Uint8ClampedArray(layer.pixels),
             visible: layer.visible,
-            opacity: layer.opacity
+            opacity: layer.opacity,
+            offscreen: layer.offscreen,
+            offscreenCtx: layer.offscreenCtx,
+            dirty: true
         }));
     }
 
@@ -25,7 +28,10 @@ export class History {
             name: layer.name,
             pixels: new Uint8ClampedArray(layer.pixels),
             visible: layer.visible,
-            opacity: layer.opacity
+            opacity: layer.opacity,
+            offscreen: layer.offscreen,
+            offscreenCtx: layer.offscreenCtx,
+            dirty: true
         }));
 
         const hasChanges = currentSnapshot.some((layer, i) => {
@@ -57,7 +63,7 @@ export class History {
             opacity: layer.opacity,
             offscreen: layer.offscreen,
             offscreenCtx: layer.offscreenCtx,
-            dirty: layer.dirty
+            dirty: true
         }));
 
         this.redoStack.push(currentSnapshot);
@@ -77,7 +83,7 @@ export class History {
             opacity: layer.opacity,
             offscreen: layer.offscreen,
             offscreenCtx: layer.offscreenCtx,
-            dirty: layer.dirty
+            dirty: true
         }));
 
         this.undoStack.push(currentSnapshot);
@@ -98,7 +104,9 @@ export class History {
             dirty: true
         }));
         this.state.set('layers', layers);
-        window.app.canvas.render();
-        window.app.layersPanel.render();
+        if (window.app) {
+            window.app.canvas.render();
+            window.app.layersPanel.render();
+        }
     }
 }

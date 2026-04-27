@@ -188,8 +188,8 @@ class App {
                 case 'm': this.selectTool('selector'); break;
                 case 'v': this.selectTool('move'); break;
                 case 't': this.selectTool('text'); break;
-                case '[': this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 1)); break;
-                case ']': this.state.set('brushSize', Math.min(8, this.state.get('brushSize') + 1)); break;
+                case '[': this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 2)); break;
+                case ']': this.state.set('brushSize', Math.min(7, this.state.get('brushSize') + 2)); break;
             }
         }
     }
