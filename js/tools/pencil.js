@@ -44,12 +44,13 @@ export class PencilTool {
         this.canvas.render();
         const zoom = this.canvas.zoom;
         const size = this.state.get('brushSize');
+        const offset = Math.floor(size / 2);
         const ctx = this.canvas.ctx;
         ctx.strokeStyle = 'rgba(255,255,255,0.5)';
         ctx.lineWidth = 1;
         ctx.strokeRect(
-            pos.x * zoom - 0.5,
-            pos.y * zoom - 0.5,
+            (pos.x - offset) * zoom - 0.5,
+            (pos.y - offset) * zoom - 0.5,
             size * zoom + 1,
             size * zoom + 1
         );
@@ -87,11 +88,12 @@ export class PencilTool {
     drawPixel(pos) {
         const color = this.state.get('currentColor');
         const size = this.state.get('brushSize');
+        const offset = Math.floor(size / 2);
 
         for (let dy = 0; dy < size; dy++) {
             for (let dx = 0; dx < size; dx++) {
-                const x = pos.x + dx;
-                const y = pos.y + dy;
+                const x = pos.x + dx - offset;
+                const y = pos.y + dy - offset;
                 if (x >= 0 && y >= 0 && x < this.canvas.width && y < this.canvas.height) {
                     this.canvas.setPixel(x, y, color);
                 }
