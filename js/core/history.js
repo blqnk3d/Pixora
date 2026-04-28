@@ -101,6 +101,10 @@ export class History {
         const height = snapshot.canvasHeight;
         this.state.set('canvasWidth', width);
         this.state.set('canvasHeight', height);
+        if (window.app && window.app.canvas) {
+            window.app.canvas.canvasWidth = width;
+            window.app.canvas.canvasHeight = height;
+        }
         this.state.set('layers', snapshot.layers.map(s => {
             const offscreen = new OffscreenCanvas(width, height);
             const offscreenCtx = offscreen.getContext('2d');

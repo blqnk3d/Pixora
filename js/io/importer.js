@@ -25,6 +25,8 @@ export class Importer {
                 const height = img.naturalHeight || img.height;
 
                 this.app.state.initCanvas(width, height);
+                this.app.canvas.canvasWidth = width;
+                this.app.canvas.canvasHeight = height;
 
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = width;
