@@ -94,15 +94,10 @@ export class MagicSelectTool {
         const width = this.canvas.width;
         const { x1, y1, x2, y2, mask } = this.selection;
 
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([]);
-        ctx.strokeRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
-
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.strokeRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
+        ctx.setLineDash([3, 3]);
+        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
         ctx.setLineDash([]);
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';

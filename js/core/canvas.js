@@ -145,12 +145,9 @@ export class CanvasEngine {
 
         this.lastPreviewPos = { x: pos.x, y: pos.y };
 
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(prevX, prevY, size, size);
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
-        ctx.strokeRect(prevX, prevY, size, size);
+        ctx.strokeRect(prevX + 0.5, prevY + 0.5, size - 1, size - 1);
     }
 
 renderNow() {
@@ -221,7 +218,7 @@ renderNow() {
 
         this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(prevX, prevY, size, size);
+        this.ctx.strokeRect(prevX + 0.5, prevY + 0.5, size - 1, size - 1);
     }
 
     drawPreviewOnly() {
@@ -244,12 +241,9 @@ renderNow() {
 
         this.lastPreviewPos = { x: pos.x, y: pos.y, size };
 
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(pos.x - offset, pos.y - offset, size, size);
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(pos.x - offset, pos.y - offset, size, size);
+        this.ctx.strokeRect(pos.x - offset + 0.5, pos.y - offset + 0.5, size - 1, size - 1);
     }
 
     showPreviewAt(x, y) {
@@ -266,12 +260,9 @@ renderNow() {
 
         this.lastPreviewPos = { x, y, size };
 
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(x - offset, y - offset, size, size);
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(x - offset, y - offset, size, size);
+        this.ctx.strokeRect(x - offset + 0.5, y - offset + 0.5, size - 1, size - 1);
     }
 
     setPixel(x, y, color, layerIndex = null) {

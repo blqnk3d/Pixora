@@ -45,19 +45,12 @@ export class EllipseSelectTool {
         const maxY = Math.max(y1, y2);
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
-        const radiusX = (maxX - minX + 1) / 2;
-        const radiusY = (maxY - minY + 1) / 2;
-
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 3;
-        ctx.setLineDash([]);
-        ctx.beginPath();
-        ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
-        ctx.stroke();
+        const radiusX = (maxX - minX) / 2;
+        const radiusY = (maxY - minY) / 2;
 
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
+        ctx.setLineDash([3, 3]);
         ctx.beginPath();
         ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.stroke();
