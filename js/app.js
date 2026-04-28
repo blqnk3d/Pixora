@@ -141,14 +141,22 @@ class App {
         const container = document.getElementById('canvas-container');
         const self = this;
 
-        canvasEl.addEventListener('mousedown', (e) => {
-            e.preventDefault();
+        container.addEventListener('mousedown', (e) => {
             if (e.button === 1 || (e.button === 0 && this.isSpacePressed)) {
+                e.preventDefault();
                 this.isPanning = true;
                 this.panStart = { x: e.clientX, y: e.clientY };
                 this.scrollStart = { x: container.scrollLeft, y: container.scrollTop };
-                canvasEl.style.cursor = 'grabbing';
-            } else if (e.button === 2) {
+                document.body.style.cursor = 'grabbing';
+            }
+        });
+
+        canvasEl.addEventListener('mousedown', (e) => {
+            if (e.button === 1 || (e.button === 0 && this.isSpacePressed)) {
+                return; // Handled by container
+            }
+            e.preventDefault();
+            if (e.button === 2) {
                 const pos = this.canvas.getPixelPosition(e);
                 if (pos) {
                     this.selectTool('eraser');
@@ -214,6 +222,7 @@ class App {
         document.addEventListener('mouseup', (e) => {
             if ((e.button === 1 || e.button === 0) && this.isPanning) {
                 this.isPanning = false;
+                document.body.style.cursor = '';
                 canvasEl.style.cursor = this.isSpacePressed ? 'grab' : 'crosshair';
             } else {
                 if (this.currentTool && this.currentTool.onMouseUp) {
@@ -237,7 +246,8 @@ class App {
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !this.isSpacePressed && e.target === document.body) {
                 this.isSpacePressed = true;
-                this.canvas.element.style.cursor = 'grab';
+                document.body.style.cursor = 'grab';
+                canvasEl.style.cursor = 'grab';
                 e.preventDefault();
             }
             this.onKeyDown(e);
@@ -246,7 +256,8 @@ class App {
         document.addEventListener('keyup', (e) => {
             if (e.code === 'Space') {
                 this.isSpacePressed = false;
-                this.canvas.element.style.cursor = 'crosshair';
+                document.body.style.cursor = '';
+                canvasEl.style.cursor = 'crosshair';
                 if (this.isPanning) {
                     this.isPanning = false;
                 }
