@@ -131,6 +131,12 @@ body {
     background-size: 16px 16px;
     background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
     background-color: #808080;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+#canvas-container::-webkit-scrollbar {
+    display: none;
 }
 
 #pixel-canvas {
