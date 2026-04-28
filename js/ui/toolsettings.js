@@ -22,13 +22,6 @@ export class ToolSettings {
                         <button class="size-btn" data-delta="2" title="Increase ( ] )">+</button>
                     </div>
                 </div>
-                <div class="setting-row">
-                    <label style="font-size:11px;color:var(--text-secondary)">Preview</label>
-                    <div style="display:flex;align-items:center;gap:4px">
-                        <div id="brush-preview" style="width:${brushSize + 4}px;height:${brushSize + 4}px;background:var(--text-primary);border-radius:50%;opacity:0.7"></div>
-                        <span style="font-size:11px;color:var(--text-secondary)">${brushSize}px</span>
-                    </div>
-                </div>
             `;
         } else if (currentTool === 'magicSelect') {
             content += `
