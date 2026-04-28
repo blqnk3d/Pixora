@@ -6,12 +6,20 @@ export const icons = {
         <path d="M20 20H7L3 16l9-9 8 8-4 4Z"/>
         <path d="M6.5 13.5 2 18l2 2 4.5-4.5"/>
     </svg>`,
+    picker: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m2 22 1-1h3l9-9"/>
+        <path d="M3 21v-3l9-9"/>
+        <path d="m15 6 3.4-3.4a2.1 2.1 0 1 1 3 3L18 9l-3-3Z"/>
+    </svg>`,
     fill: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M19 11L12 18a4 4 0 0 1-6-6l6-6a3 3 0 0 1 4 4L9 17"/>
         <path d="M21 3L15 9"/>
     </svg>`,
-    selector: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <rect x="3" y="3" width="18" height="18" rx="1" stroke-dasharray="4 2"/>
+    selector: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="1"/>
+    </svg>`,
+    ellipseSelect: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
     </svg>`,
     magicSelect: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M15 4V2"/>

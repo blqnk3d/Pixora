@@ -11,6 +11,7 @@ import { Exporter } from './io/exporter.js';
 import { Importer } from './io/importer.js';
 import { PencilTool } from './tools/pencil.js';
 import { EraserTool } from './tools/eraser.js';
+import { ColorPickerTool } from './tools/color-picker.js';
 import { FillTool } from './tools/fill.js';
 import { SelectorTool } from './tools/selector.js';
 import { TransformTool } from './tools/transform.js';
@@ -27,6 +28,7 @@ class App {
         this.tools = {
             pencil: new PencilTool(this.canvas, this.state, this.history),
             eraser: new EraserTool(this.canvas, this.state, this.history),
+            picker: new ColorPickerTool(this.canvas, this.state, this.history),
             fill: new FillTool(this.canvas, this.state, this.history),
             selector: new SelectorTool(this.canvas, this.state, this.history),
             move: new TransformTool(this.canvas, this.state, this.history),
@@ -36,6 +38,7 @@ class App {
         };
 
         this.currentTool = this.tools.pencil;
+        this.previousToolBeforeEraser = null;
         this.isPanning = false;
         this.panStart = null;
         this.scrollStart = null;
@@ -160,6 +163,10 @@ class App {
             if (e.button === 2) {
                 const pos = this.canvas.getPixelPosition(e);
                 if (pos) {
+                    const currentToolName = this.state.get('currentTool');
+                    if (currentToolName !== 'eraser') {
+                        this.previousToolBeforeEraser = currentToolName;
+                    }
                     this.selectTool('eraser');
                     this.currentTool.onMouseDown(pos, e);
                 }
@@ -230,6 +237,10 @@ class App {
                 if (this.currentTool && this.currentTool.onMouseUp) {
                     this.currentTool.onMouseUp(e);
                     this.canvas.render();
+                }
+                if (e.button === 2 && this.previousToolBeforeEraser) {
+                    this.selectTool(this.previousToolBeforeEraser);
+                    this.previousToolBeforeEraser = null;
                 }
             }
         });
@@ -349,6 +360,7 @@ class App {
             switch (e.key.toLowerCase()) {
                 case 'b': this.selectTool('pencil'); break;
                 case 'e': this.selectTool('eraser'); break;
+                case 'i': this.selectTool('picker'); break;
                 case 'g': this.selectTool('fill'); break;
                 case 'm': this.selectTool('selector'); break;
                 case 'v': this.selectTool('move'); break;

@@ -64,7 +64,7 @@ export class MenuBar {
       case "scale-200": app.tools.move.scaleLayer(2, 2); break;
       case "rotate-90": app.tools.move.rotateLayer(90); break;
       case "rotate-180": app.tools.move.rotateLayer(180); break;
-      case "crop-selection": if (app.tools.selector.selection) app.tools.move.cropToSelection(); break;
+      case "crop-selection": if (app.hasSelection()) app.tools.move.cropToSelection(); break;
       case "remove-bg": app.exporter.removeBackground(); break;
     }
   }

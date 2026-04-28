@@ -327,4 +327,25 @@ export class TransformTool {
         this.canvas.resizeCanvas(newWidth, newHeight);
         this.history.endStroke();
     }
+
+    cropToSelection() {
+        const sel = window.app?.getActiveSelection();
+        if (!sel) return;
+        
+        let x1, y1, x2, y2;
+        if (sel.mask) {
+            x1 = sel.x1;
+            y1 = sel.y1;
+            x2 = sel.x2;
+            y2 = sel.y2;
+        } else {
+            x1 = sel.x1;
+            y1 = sel.y1;
+            x2 = sel.x2;
+            y2 = sel.y2;
+        }
+        
+        this.cropLayer(x1, y1, x2, y2);
+        window.app?.deselectAll();
+    }
 }

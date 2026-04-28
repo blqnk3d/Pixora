@@ -7,8 +7,10 @@ export class Toolbar {
         this.tools = [
             { name: 'pencil', icon: icons.pencil, title: 'Pencil (B)', shortcut: 'B' },
             { name: 'eraser', icon: icons.eraser, title: 'Eraser (E)', shortcut: 'E' },
+            { name: 'picker', icon: icons.picker, title: 'Color Picker (I)', shortcut: 'I' },
             { name: 'fill', icon: icons.fill, title: 'Fill (G)', shortcut: 'G' },
-            { name: 'selector', icon: icons.selector, title: 'Select (M)', shortcut: 'M' },
+            { name: 'selector', icon: icons.selector, title: 'Rect Select (M)', shortcut: 'M' },
+            { name: 'ellipseSelect', icon: icons.ellipseSelect, title: 'Ellipse Select (O)', shortcut: 'O' },
             { name: 'magicSelect', icon: icons.magicSelect, title: 'Magic Select (W)', shortcut: 'W' },
             { name: 'move', icon: icons.move, title: 'Move (V)', shortcut: 'V' },
             { name: 'text', icon: icons.text, title: 'Text (T)', shortcut: 'T' }
