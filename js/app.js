@@ -57,6 +57,18 @@ class App {
         this.canvas.render();
         this.layersPanel.render();
         this.statusBar.render();
+        
+        if (!this.state.get('hideBars')) {
+            document.body.classList.add('bars-visible');
+        }
+        var self = this;
+        this.state.on('hideBars', function(value) {
+            if (value) {
+                document.body.classList.remove('bars-visible');
+            } else {
+                document.body.classList.add('bars-visible');
+            }
+        });
     }
 
     selectTool(name) {
@@ -131,6 +143,12 @@ class App {
                 this.panStart = { x: e.clientX, y: e.clientY };
                 this.scrollStart = { x: container.scrollLeft, y: container.scrollTop };
                 canvasEl.style.cursor = 'grab';
+            } else if (e.button === 2) {
+                const pos = this.canvas.getPixelPosition(e);
+                if (pos) {
+                    this.selectTool('eraser');
+                    this.currentTool.onMouseDown(pos, e);
+                }
             } else {
                 const pos = this.canvas.getPixelPosition(e);
                 if (pos) {
@@ -139,6 +157,10 @@ class App {
             }
         });
 
+        canvasEl.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+        
         canvasEl.addEventListener('mouseleave', () => {
             if (this.currentTool && this.currentTool.previewPos) {
                 this.currentTool.previewPos = null;

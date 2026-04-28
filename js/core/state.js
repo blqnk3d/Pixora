@@ -1,6 +1,7 @@
 export class State {
     constructor() {
         const retroFont = localStorage.getItem('prity-retro-font') === 'true';
+        const hideBars = localStorage.getItem('prity-hide-bars');
         this.state = {
             canvasWidth: 32,
             canvasHeight: 32,
@@ -20,7 +21,8 @@ export class State {
                 [0,0,128,255], [128,128,0,255], [128,0,128,255], [0,128,128,255]
             ],
             recentColors: [],
-            retroFont: retroFont
+            retroFont: retroFont,
+            hideBars: hideBars === null ? true : hideBars === 'true'
         };
         this.listeners = new Map();
 
@@ -60,6 +62,9 @@ export class State {
     set(key, value) {
         this.state[key] = value;
         this.emit(key, value);
+        if (key === 'hideBars') {
+            localStorage.setItem('prity-hide-bars', value);
+        }
     }
 
     on(key, fn) {
