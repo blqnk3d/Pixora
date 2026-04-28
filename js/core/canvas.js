@@ -6,7 +6,7 @@ export class CanvasEngine {
         this.history = history;
         this.canvasWidth = state.get('canvasWidth') || 32;
         this.canvasHeight = state.get('canvasHeight') || 32;
-        this.zoom = 1;
+        this.zoom = state.get('zoom') || 1;
         this.minZoom = 0.1;
         this.maxZoom = 128;
         this.isDrawing = false;
@@ -19,6 +19,8 @@ export class CanvasEngine {
         this.lastScrollY = 0;
 
         this.ctx.imageSmoothingEnabled = false;
+        this.applyZoomTransform();
+        this.centerCanvas();
         this.updateCachedRect();
         this.setupScrollListener();
     }
@@ -54,7 +56,7 @@ export class CanvasEngine {
         return { x, y };
     }
 
-    setZoom(newZoom, mouseX, mouseY) {
+    setZoom(newZoom) {
         const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
         if (Math.abs(this.zoom - clampedZoom) < 0.001) return;
         
@@ -65,41 +67,57 @@ export class CanvasEngine {
         this.render();
         this.state.set('zoom', this.zoom);
         
-        if (mouseX !== undefined && mouseY !== undefined) {
-            this.scrollToMouse(mouseX, mouseY, oldZoom, clampedZoom);
-        }
+        this.centerCanvas();
     }
 
     applyZoomTransform() {
-        this.element.style.width = this.canvasWidth + 'px';
-        this.element.style.height = this.canvasHeight + 'px';
-        this.element.style.transform = `scale(${this.zoom})`;
-        this.element.style.transformOrigin = 'center center';
+        this.element.style.width = Math.floor(this.canvasWidth * this.zoom) + 'px';
+        this.element.style.height = Math.floor(this.canvasHeight * this.zoom) + 'px';
+        this.element.style.transform = '';
+        this.element.style.transformOrigin = '';
     }
 
-    zoomIn(mouseX, mouseY) {
-        this.setZoom(this.zoom * 1.25, mouseX, mouseY);
+    zoomIn() {
+        const oldZoom = this.zoom;
+        this.setZoom(this.zoom * 1.25);
     }
 
-    zoomOut(mouseX, mouseY) {
-        this.setZoom(this.zoom / 1.25, mouseX, mouseY);
+    zoomOut() {
+        const oldZoom = this.zoom;
+        this.setZoom(this.zoom / 1.25);
+    }
+
+    centerCanvas() {
+        const container = document.getElementById('canvas-container');
+        const workspace = container?.querySelector('.canvas-workspace');
+        if (!container || !workspace) return;
+        
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        
+        // Use a small timeout to ensure layout has updated
+        setTimeout(() => {
+            container.scrollLeft = (workspace.scrollWidth - containerWidth) / 2;
+            container.scrollTop = (workspace.scrollHeight - containerHeight) / 2;
+        }, 0);
     }
 
     scrollToMouse(mouseX, mouseY, oldZoom, newZoom) {
         const container = document.getElementById('canvas-container');
-        if (!container) return;
+        const workspace = container?.querySelector('.canvas-workspace');
+        if (!container || !workspace) return;
         
         if (oldZoom !== undefined && newZoom !== undefined) {
             const scale = newZoom / oldZoom;
             const newScrollX = mouseX * scale - container.clientWidth / 2;
             const newScrollY = mouseY * scale - container.clientHeight / 2;
-            container.scrollLeft = Math.max(0, newScrollX);
-            container.scrollTop = Math.max(0, newScrollY);
+            container.scrollLeft = newScrollX;
+            container.scrollTop = newScrollY;
         } else {
             const targetX = mouseX - container.clientWidth / 2;
             const targetY = mouseY - container.clientHeight / 2;
-            container.scrollLeft = Math.max(0, targetX);
-            container.scrollTop = Math.max(0, targetY);
+            container.scrollLeft = targetX;
+            container.scrollTop = targetY;
         }
     }
 

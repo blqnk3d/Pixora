@@ -199,8 +199,19 @@ body:not(.bars-visible) #left-toolbar:not(:hover) .tool-btn {
 #canvas-container {
     flex: 1;
     overflow: auto;
-    position: relative;
     background: var(--bg-primary);
+    background-color: #808080;
+    position: relative;
+    display: block; /* Let it be a scroll container */
+}
+
+.canvas-workspace {
+    min-width: 100%;
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1000px;
     background-image:
         linear-gradient(45deg, #c0c0c0 25%, transparent 25%),
         linear-gradient(-45deg, #c0c0c0 25%, transparent 25%),
@@ -208,29 +219,7 @@ body:not(.bars-visible) #left-toolbar:not(:hover) .tool-btn {
         linear-gradient(-45deg, transparent 75%, #c0c0c0 75%);
     background-size: 16px 16px;
     background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
-    background-color: #808080;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-#canvas-container::-webkit-scrollbar {
-    display: none;
-}
-
-#pixel-canvas {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    image-rendering: -moz-crisp-edges;
-    cursor: crosshair;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
-}
-
-#canvas-container::-webkit-scrollbar {
-    display: none;
+    box-sizing: border-box;
 }
 
 #pixel-canvas {
@@ -239,6 +228,7 @@ body:not(.bars-visible) #left-toolbar:not(:hover) .tool-btn {
     image-rendering: -moz-crisp-edges;
     cursor: crosshair;
     box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    flex-shrink: 0;
 }
 
 #right-panels {

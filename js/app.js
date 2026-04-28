@@ -180,10 +180,10 @@ class App {
 
         document.addEventListener('mousemove', (e) => {
             if (this.isPanning) {
-                const dx = (e.clientX - this.panStart.x) * 1.5;
-                const dy = (e.clientY - this.panStart.y) * 1.5;
-                container.scrollLeft = this.scrollStart.x + dx;
-                container.scrollTop = this.scrollStart.y + dy;
+                const dx = (e.clientX - this.panStart.x);
+                const dy = (e.clientY - this.panStart.y);
+                container.scrollLeft = this.scrollStart.x - dx;
+                container.scrollTop = this.scrollStart.y - dy;
             } else {
                 if (this.currentTool && this.currentTool.onMouseMove) {
                     const pos = this.canvas.getPixelPosition(e);
@@ -225,12 +225,10 @@ class App {
         window.addEventListener('wheel', (e) => {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
-                const mouseX = e.clientX;
-                const mouseY = e.clientY;
                 if (e.deltaY > 0) {
-                    self.canvas.zoomOut(mouseX, mouseY);
+                    self.canvas.zoomOut();
                 } else {
-                    self.canvas.zoomIn(mouseX, mouseY);
+                    self.canvas.zoomIn();
                 }
             }
         });
