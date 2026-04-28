@@ -63,6 +63,10 @@ class App {
         if (this.currentTool && this.currentTool.deactivate) {
             this.currentTool.deactivate();
         }
+        const selectionTools = ['selector', 'magicSelect', 'ellipseSelect'];
+        if (selectionTools.includes(name)) {
+            this.deselectAll();
+        }
         this.currentTool = this.tools[name];
         if (this.currentTool && this.currentTool.activate) {
             this.currentTool.activate();
@@ -172,10 +176,13 @@ class App {
         canvasEl.addEventListener('wheel', (e) => {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
+                const rect = canvasEl.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
                 if (e.deltaY > 0) {
-                    this.canvas.zoomOut();
+                    this.canvas.zoomOut(mouseX, mouseY);
                 } else {
-                    this.canvas.zoomIn();
+                    this.canvas.zoomIn(mouseX, mouseY);
                 }
             }
         });
@@ -229,6 +236,18 @@ class App {
                         this.tools.selector.selectAll();
                     }
                     break;
+                case 'c':
+                    e.preventDefault();
+                    this.copySelection();
+                    break;
+                case 'x':
+                    e.preventDefault();
+                    this.cutSelection();
+                    break;
+                case 'v':
+                    e.preventDefault();
+                    this.pasteSelection();
+                    break;
             }
         } else {
             switch (e.key.toLowerCase()) {
@@ -254,9 +273,187 @@ class App {
                         this.state.set('brushSize', Math.min(7, this.state.get('brushSize') + 2));
                     }
                     break;
-                case 'escape': this.deselectAll(); break;
+                case 'escape': 
+                    this.deselectAll(); 
+                    if (this.tools.move?.cancelMove) {
+                        this.tools.move.cancelMove();
+                    }
+                    break;
+                case 'delete':
+                    e.preventDefault();
+                    this.deleteSelection();
+                    break;
+                case 'enter':
+                    e.preventDefault();
+                    if (this.tools.move?.approveMove) {
+                        this.tools.move.approveMove();
+                    }
+                    break;
             }
         }
+    }
+
+    copySelection() {
+        const sel = this.getActiveSelection();
+        if (!sel) return;
+        
+        let pixels, x, y, width, height;
+        const tool = this.getSelectionTool();
+        
+        if (tool === 'selector' || tool === 'ellipseSelect') {
+            const { x1, y1, x2, y2 } = this.tools.selector?.selection || this.tools.ellipseSelect?.selection;
+            x = Math.min(x1, x2);
+            y = Math.min(y1, y2);
+            width = Math.abs(x2 - x1) + 1;
+            height = Math.abs(y2 - y1) + 1;
+            pixels = this.getSelectedPixels(x, y, width, height);
+        } else if (tool === 'magicSelect') {
+            const selData = this.tools.magicSelect.getSelectedPixels();
+            if (!selData) return;
+            x = selData.x;
+            y = selData.y;
+            width = selData.width;
+            height = selData.height;
+            pixels = selData.pixels;
+        }
+        
+        if (pixels && width && height) {
+            this.clipboard = { pixels, x, y, width, height };
+        }
+    }
+
+    cutSelection() {
+        const sel = this.getActiveSelection();
+        if (!sel) return;
+        
+        this.copySelection();
+        this.deleteSelection();
+    }
+
+    pasteSelection() {
+        if (!this.clipboard) return;
+        
+        const { pixels, width, height, x, y } = this.clipboard;
+        const layerIdx = this.state.get('activeLayer');
+        const layer = this.state.get('layers')[layerIdx];
+        if (!layer) return;
+        
+        const canvasWidth = this.canvas.width;
+        for (let py = 0; py < height; py++) {
+            for (let px = 0; px < width; px++) {
+                const dstX = x + px;
+                const dstY = y + py;
+                if (dstX >= 0 && dstX < canvasWidth && dstY >= 0 && dstY < this.canvas.height) {
+                    const srcIdx = (py * width + px) * 4;
+                    const dstIdx = (dstY * canvasWidth + dstX) * 4;
+                    if (pixels[srcIdx + 3] > 0) {
+                        layer.pixels[dstIdx] = pixels[srcIdx];
+                        layer.pixels[dstIdx + 1] = pixels[srcIdx + 1];
+                        layer.pixels[dstIdx + 2] = pixels[srcIdx + 2];
+                        layer.pixels[dstIdx + 3] = pixels[srcIdx + 3];
+                    }
+                }
+            }
+        }
+        layer.dirty = true;
+        this.canvas.render();
+    }
+
+    deleteSelection() {
+        const sel = this.getActiveSelection();
+        if (!sel) return;
+        
+        const tool = this.getSelectionTool();
+        let minX, minY, maxX, maxY;
+        
+        if (tool === 'selector' || tool === 'ellipseSelect') {
+            const s = this.tools.selector?.selection || this.tools.ellipseSelect?.selection;
+            minX = Math.min(s.x1, s.x2);
+            minY = Math.min(s.y1, s.y2);
+            maxX = Math.max(s.x1, s.x2);
+            maxY = Math.max(s.y1, s.y2);
+        } else if (tool === 'magicSelect') {
+            const s = this.tools.magicSelect.selection;
+            minX = s.x1;
+            minY = s.y1;
+            maxX = s.x2;
+            maxY = s.y2;
+        }
+        
+        const layerIdx = this.state.get('activeLayer');
+        const layer = this.state.get('layers')[layerIdx];
+        if (!layer) return;
+        
+        const canvasWidth = this.canvas.width;
+        if (tool === 'magicSelect' && this.tools.magicSelect.selection?.mask) {
+            const { mask } = this.tools.magicSelect.selection;
+            for (let py = minY; py <= maxY; py++) {
+                for (let px = minX; px <= maxX; px++) {
+                    if (mask[py * canvasWidth + px]) {
+                        const idx = (py * canvasWidth + px) * 4;
+                        layer.pixels[idx] = 0;
+                        layer.pixels[idx + 1] = 0;
+                        layer.pixels[idx + 2] = 0;
+                        layer.pixels[idx + 3] = 0;
+                    }
+                }
+            }
+        } else {
+            for (let py = minY; py <= maxY; py++) {
+                for (let px = minX; px <= maxX; px++) {
+                    if (px >= 0 && px < canvasWidth && py >= 0 && py < this.canvas.height) {
+                        const idx = (py * canvasWidth + px) * 4;
+                        layer.pixels[idx] = 0;
+                        layer.pixels[idx + 1] = 0;
+                        layer.pixels[idx + 2] = 0;
+                        layer.pixels[idx + 3] = 0;
+                    }
+                }
+            }
+        }
+        
+        layer.dirty = true;
+        this.deselectAll();
+        this.canvas.render();
+    }
+
+    getActiveSelection() {
+        if (this.tools.selector?.selection) return this.tools.selector.selection;
+        if (this.tools.magicSelect?.selection) return this.tools.magicSelect.selection;
+        if (this.tools.ellipseSelect?.selection) return this.tools.ellipseSelect.selection;
+        return null;
+    }
+
+    getSelectionTool() {
+        if (this.tools.selector?.selection) return 'selector';
+        if (this.tools.magicSelect?.selection) return 'magicSelect';
+        if (this.tools.ellipseSelect?.selection) return 'ellipseSelect';
+        return null;
+    }
+
+    getSelectedPixels(x, y, w, h) {
+        const layerIdx = this.state.get('activeLayer');
+        const layer = this.state.get('layers')[layerIdx];
+        if (!layer) return null;
+        
+        const pixels = new Uint8ClampedArray(w * h * 4);
+        const canvasWidth = this.canvas.width;
+        
+        for (let py = 0; py < h; py++) {
+            for (let px = 0; px < w; px++) {
+                const srcX = x + px;
+                const srcY = y + py;
+                if (srcX >= 0 && srcX < canvasWidth && srcY >= 0 && srcY < this.canvas.height) {
+                    const srcIdx = (srcY * canvasWidth + srcX) * 4;
+                    const dstIdx = (py * w + px) * 4;
+                    pixels[dstIdx] = layer.pixels[srcIdx];
+                    pixels[dstIdx + 1] = layer.pixels[srcIdx + 1];
+                    pixels[dstIdx + 2] = layer.pixels[srcIdx + 2];
+                    pixels[dstIdx + 3] = layer.pixels[srcIdx + 3];
+                }
+            }
+        }
+        return pixels;
     }
 
     updateUI() {

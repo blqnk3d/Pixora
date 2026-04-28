@@ -71,7 +71,7 @@ export class CanvasEngine {
         this.element.style.transformOrigin = 'top left';
     }
 
-    zoomIn() {
+    zoomIn(mouseX, mouseY) {
         if (this.zoomIndex < this.zoomLevels.length - 1) {
             this.zoomIndex++;
             this.zoom = this.zoomLevels[this.zoomIndex];
@@ -79,10 +79,13 @@ export class CanvasEngine {
             this.updateCachedRect();
             this.render();
             this.state.set('zoom', this.zoom);
+            if (mouseX !== undefined && mouseY !== undefined) {
+                this.scrollToMouse(mouseX, mouseY);
+            }
         }
     }
 
-    zoomOut() {
+    zoomOut(mouseX, mouseY) {
         if (this.zoomIndex > 0) {
             this.zoomIndex--;
             this.zoom = this.zoomLevels[this.zoomIndex];
@@ -90,7 +93,19 @@ export class CanvasEngine {
             this.updateCachedRect();
             this.render();
             this.state.set('zoom', this.zoom);
+            if (mouseX !== undefined && mouseY !== undefined) {
+                this.scrollToMouse(mouseX, mouseY);
+            }
         }
+    }
+
+    scrollToMouse(mouseX, mouseY) {
+        const container = document.getElementById('canvas-container');
+        if (!container) return;
+        const targetX = mouseX - container.clientWidth / 2;
+        const targetY = mouseY - container.clientHeight / 2;
+        container.scrollLeft = Math.max(0, targetX);
+        container.scrollTop = Math.max(0, targetY);
     }
 
     render() {
