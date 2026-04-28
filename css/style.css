@@ -97,6 +97,19 @@ body {
     position: relative;
 }
 
+body:not(.bars-visible) #left-toolbar::after {
+    display: none;
+}
+
+body:not(.bars-visible) #left-toolbar:not(:hover) {
+    width: var(--toolbar-width);
+    opacity: 1;
+}
+
+body:not(.bars-visible) #left-toolbar:not(:hover) .tool-btn {
+    display: flex;
+}
+
 #left-toolbar::after {
     content: '';
     position: absolute;
@@ -233,6 +246,20 @@ body {
     position: relative;
 }
 
+body:not(.bars-visible) #right-panels::before {
+    display: none;
+}
+
+body:not(.bars-visible) #right-panels:not(:hover) {
+    width: 260px;
+    opacity: 1;
+    padding: 8px;
+}
+
+body:not(.bars-visible) #right-panels:not(:hover) > * {
+    display: block;
+}
+
 #right-panels::before {
     content: '';
     position: absolute;
@@ -254,16 +281,6 @@ body {
 }
 
 #right-panels:not(:hover) > * {
-    display: none;
-}
-
-#right-panels:hover {
-    width: 260px;
-    opacity: 1;
-    padding: 8px;
-}
-
-#right-panels > * {
     display: none;
 }
 
