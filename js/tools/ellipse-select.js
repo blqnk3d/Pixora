@@ -37,17 +37,16 @@ export class EllipseSelectTool {
     drawSelection() {
         if (!this.selection) return;
         const { x1, y1, x2, y2 } = this.selection;
-        const zoom = this.canvas.zoom;
         const ctx = this.canvas.ctx;
 
         const minX = Math.min(x1, x2);
         const maxX = Math.max(x1, x2);
         const minY = Math.min(y1, y2);
         const maxY = Math.max(y1, y2);
-        const centerX = (minX + maxX) / 2 * zoom;
-        const centerY = (minY + maxY) / 2 * zoom;
-        const radiusX = (maxX - minX + 1) * zoom / 2;
-        const radiusY = (maxY - minY + 1) * zoom / 2;
+        const centerX = (minX + maxX) / 2;
+        const centerY = (minY + maxY) / 2;
+        const radiusX = (maxX - minX + 1) / 2;
+        const radiusY = (maxY - minY + 1) / 2;
 
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;

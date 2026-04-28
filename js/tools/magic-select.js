@@ -90,7 +90,6 @@ export class MagicSelectTool {
 
     drawSelection() {
         if (!this.selection) return;
-        const zoom = this.canvas.zoom;
         const ctx = this.canvas.ctx;
         const width = this.canvas.width;
         const { x1, y1, x2, y2, mask } = this.selection;
@@ -98,19 +97,19 @@ export class MagicSelectTool {
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;
         ctx.setLineDash([]);
-        ctx.strokeRect(x1 * zoom, y1 * zoom, (x2 - x1 + 1) * zoom, (y2 - y1 + 1) * zoom);
+        ctx.strokeRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
 
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
-        ctx.strokeRect(x1 * zoom, y1 * zoom, (x2 - x1 + 1) * zoom, (y2 - y1 + 1) * zoom);
+        ctx.strokeRect(x1, y1, x2 - x1 + 1, y2 - y1 + 1);
         ctx.setLineDash([]);
 
         ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
         for (let y = y1; y <= y2; y++) {
             for (let x = x1; x <= x2; x++) {
                 if (mask[y * width + x]) {
-                    ctx.fillRect(x * zoom, y * zoom, zoom, zoom);
+                    ctx.fillRect(x, y, 1, 1);
                 }
             }
         }

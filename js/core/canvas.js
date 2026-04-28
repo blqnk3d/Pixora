@@ -44,8 +44,10 @@ export class CanvasEngine {
     getPixelPosition(e) {
         if (!this.cachedRect) this.updateCachedRect();
         const rect = this.cachedRect;
-        const x = Math.floor((e.clientX - rect.left) / this.zoom);
-        const y = Math.floor((e.clientY - rect.top) / this.zoom);
+        const scaleX = rect.width / this.width;
+        const scaleY = rect.height / this.height;
+        const x = Math.floor((e.clientX - rect.left) / scaleX);
+        const y = Math.floor((e.clientY - rect.top) / scaleY);
         if (x < 0 || y < 0 || x >= this.width || y >= this.height) return null;
         return { x, y };
     }
@@ -56,15 +58,24 @@ export class CanvasEngine {
             this.zoomIndex = idx;
             this.zoom = newZoom;
         }
+        this.applyZoomTransform();
         this.updateCachedRect();
         this.render();
         this.state.set('zoom', this.zoom);
+    }
+
+    applyZoomTransform() {
+        this.element.style.width = this.width + 'px';
+        this.element.style.height = this.height + 'px';
+        this.element.style.transform = `scale(${this.zoom})`;
+        this.element.style.transformOrigin = 'top left';
     }
 
     zoomIn() {
         if (this.zoomIndex < this.zoomLevels.length - 1) {
             this.zoomIndex++;
             this.zoom = this.zoomLevels[this.zoomIndex];
+            this.applyZoomTransform();
             this.updateCachedRect();
             this.render();
             this.state.set('zoom', this.zoom);
@@ -75,6 +86,7 @@ export class CanvasEngine {
         if (this.zoomIndex > 0) {
             this.zoomIndex--;
             this.zoom = this.zoomLevels[this.zoomIndex];
+            this.applyZoomTransform();
             this.updateCachedRect();
             this.render();
             this.state.set('zoom', this.zoom);
@@ -104,22 +116,20 @@ export class CanvasEngine {
 
     renderPreviewOnly() {
         const ctx = this.ctx;
-        const zoom = this.zoom;
         const app = window.app;
         if (!app || !app.currentTool || !app.currentTool.previewPos) return;
 
         const pos = app.currentTool.previewPos;
         const size = this.state.get('brushSize');
         const offset = Math.floor(size / 2);
-        const previewSize = size * zoom;
-        const prevX = (pos.x - offset) * zoom;
-        const prevY = (pos.y - offset) * zoom;
+        const prevX = pos.x - offset;
+        const prevY = pos.y - offset;
 
         if (this.lastPreviewPos.x !== -1) {
-            const lastSize = this.state.get('brushSize') * zoom;
-            const lastOffset = Math.floor(this.state.get('brushSize') / 2);
-            const clearX = (this.lastPreviewPos.x - lastOffset) * zoom;
-            const clearY = (this.lastPreviewPos.y - lastOffset) * zoom;
+            const lastSize = this.state.get('brushSize');
+            const lastOffset = Math.floor(lastSize / 2);
+            const clearX = this.lastPreviewPos.x - lastOffset;
+            const clearY = this.lastPreviewPos.y - lastOffset;
             ctx.clearRect(clearX - 2, clearY - 2, lastSize + 4, lastSize + 4);
         }
 
@@ -127,26 +137,23 @@ export class CanvasEngine {
 
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;
-        ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+        ctx.strokeRect(prevX, prevY, size, size);
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
-        ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+        ctx.strokeRect(prevX, prevY, size, size);
     }
 
-    renderNow() {
-        const { width, height, zoom } = this;
-        const newWidth = width * zoom;
-        const newHeight = height * zoom;
+renderNow() {
+        const { width, height } = this;
 
-        if (this.element.width !== newWidth || this.element.height !== newHeight) {
-            this.element.width = newWidth;
-            this.element.height = newHeight;
-            this.element.style.width = newWidth + 'px';
-            this.element.style.height = newHeight + 'px';
+        if (this.element.width !== width || this.element.height !== height) {
+            this.element.width = width;
+            this.element.height = height;
+            this.applyZoomTransform();
             this.updateCachedRect();
         }
 
-        this.ctx.clearRect(0, 0, newWidth, newHeight);
+        this.ctx.clearRect(0, 0, width, height);
         this.ctx.imageSmoothingEnabled = false;
 
         const layers = this.state.get('layers');
@@ -156,24 +163,15 @@ export class CanvasEngine {
             const layer = layers[i];
             if (!layer.visible) continue;
 
-            if (layer.dirty || !layer.scaledCanvas || layer.lastZoom !== zoom) {
-                if (layer.dirty && layer.offscreenCtx) {
-                    const imageData = new ImageData(layer.pixels, width, height);
-                    layer.offscreenCtx.putImageData(imageData, 0, 0);
-                    layer.dirty = false;
-                }
-
-                const scaled = new OffscreenCanvas(width * zoom, height * zoom);
-                const sctx = scaled.getContext('2d');
-                sctx.imageSmoothingEnabled = false;
-                sctx.drawImage(layer.offscreen, 0, 0, width * zoom, height * zoom);
-                layer.scaledCanvas = scaled;
-                layer.lastZoom = zoom;
+            if (layer.dirty && layer.offscreenCtx) {
+                const imageData = new ImageData(layer.pixels, width, height);
+                layer.offscreenCtx.putImageData(imageData, 0, 0);
+                layer.dirty = false;
             }
 
             this.ctx.globalAlpha = layer.opacity;
             this.ctx.imageSmoothingEnabled = false;
-            this.ctx.drawImage(layer.scaledCanvas, 0, 0);
+            this.ctx.drawImage(layer.offscreen, 0, 0);
         }
         this.ctx.globalAlpha = 1;
 
@@ -206,19 +204,17 @@ export class CanvasEngine {
         const pos = app.currentTool.previewPos;
         if (!pos) return;
 
-        const zoom = this.zoom;
         const size = this.state.get('brushSize');
         const offset = Math.floor(size / 2);
-        const prevX = (pos.x - offset) * zoom;
-        const prevY = (pos.y - offset) * zoom;
-        const previewSize = size * zoom;
+        const prevX = pos.x - offset;
+        const prevY = pos.y - offset;
 
         this.ctx.strokeStyle = '#000000';
         this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+        this.ctx.strokeRect(prevX, prevY, size, size);
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(prevX, prevY, previewSize, previewSize);
+        this.ctx.strokeRect(prevX, prevY, size, size);
     }
 
     drawPreviewOnly() {
@@ -226,58 +222,49 @@ export class CanvasEngine {
         const pos = app?.currentTool?.previewPos;
         if (!pos) return;
 
-        const zoom = this.zoom;
         const size = this.state.get('brushSize');
         const offset = Math.floor(size / 2);
-        const previewSize = size * zoom + 4;
-        const prevX = (pos.x - offset) * zoom - 2;
-        const prevY = (pos.y - offset) * zoom - 2;
+        const prevX = pos.x - offset - 2;
+        const prevY = pos.y - offset - 2;
 
         if (this.lastPreviewPos) {
-            const lastSize = (this.lastPreviewPos.size || size) * zoom + 4;
+            const lastSize = (this.lastPreviewPos.size || size) + 4;
             const lastOffset = Math.floor((this.lastPreviewPos.size || size) / 2);
-            const clearX = (this.lastPreviewPos.x - lastOffset) * zoom - 2;
-            const clearY = (this.lastPreviewPos.y - lastOffset) * zoom - 2;
+            const clearX = this.lastPreviewPos.x - lastOffset - 2;
+            const clearY = this.lastPreviewPos.y - lastOffset - 2;
             this.ctx.clearRect(clearX, clearY, lastSize, lastSize);
         }
 
         this.lastPreviewPos = { x: pos.x, y: pos.y, size };
 
-        const drawX = (pos.x - offset) * zoom;
-        const drawY = (pos.y - offset) * zoom;
-
         this.ctx.strokeStyle = '#000000';
         this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(drawX, drawY, size * zoom, size * zoom);
+        this.ctx.strokeRect(pos.x - offset, pos.y - offset, size, size);
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(drawX, drawY, size * zoom, size * zoom);
+        this.ctx.strokeRect(pos.x - offset, pos.y - offset, size, size);
     }
 
     showPreviewAt(x, y) {
         if (this.lastPreviewPos) {
-            const lastSize = (this.lastPreviewPos.size || this.state.get('brushSize')) * this.zoom;
+            const lastSize = (this.lastPreviewPos.size || this.state.get('brushSize')) + 4;
             const lastOffset = Math.floor((this.lastPreviewPos.size || this.state.get('brushSize')) / 2);
-            const lx = (this.lastPreviewPos.x - lastOffset) * this.zoom - 2;
-            const ly = (this.lastPreviewPos.y - lastOffset) * this.zoom - 2;
-            this.ctx.clearRect(lx, ly, lastSize + 4, lastSize + 4);
+            const lx = this.lastPreviewPos.x - lastOffset - 2;
+            const ly = this.lastPreviewPos.y - lastOffset - 2;
+            this.ctx.clearRect(lx, ly, lastSize, lastSize);
         }
 
-        const zoom = this.zoom;
         const size = this.state.get('brushSize');
         const offset = Math.floor(size / 2);
-        const px = (x - offset) * zoom;
-        const py = (y - offset) * zoom;
-        const s = size * zoom;
 
         this.lastPreviewPos = { x, y, size };
 
         this.ctx.strokeStyle = '#000000';
         this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(px, py, s, s);
+        this.ctx.strokeRect(x - offset, y - offset, size, size);
         this.ctx.strokeStyle = '#ffffff';
         this.ctx.lineWidth = 1;
-        this.ctx.strokeRect(px, py, s, s);
+        this.ctx.strokeRect(x - offset, y - offset, size, size);
     }
 
     setPixel(x, y, color, layerIndex = null) {

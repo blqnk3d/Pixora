@@ -46,7 +46,6 @@ export class SelectorTool {
     drawSelection() {
         if (!this.selection) return;
         const { x1, y1, x2, y2 } = this.selection;
-        const zoom = this.canvas.zoom;
         const ctx = this.canvas.ctx;
 
         const minX = Math.min(x1, x2);
@@ -57,21 +56,11 @@ export class SelectorTool {
         ctx.strokeStyle = '#000000';
         ctx.lineWidth = 3;
         ctx.setLineDash([]);
-        ctx.strokeRect(
-            minX * zoom,
-            minY * zoom,
-            (maxX - minX + 1) * zoom,
-            (maxY - minY + 1) * zoom
-        );
+        ctx.strokeRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
         ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
         ctx.setLineDash([4, 4]);
-        ctx.strokeRect(
-            minX * zoom,
-            minY * zoom,
-            (maxX - minX + 1) * zoom,
-            (maxY - minY + 1) * zoom
-        );
+        ctx.strokeRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
         ctx.setLineDash([]);
     }
 
