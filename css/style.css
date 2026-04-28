@@ -82,6 +82,45 @@ body {
 }
 
 #left-toolbar {
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0;
+    gap: 4px;
+    transition: width 0.2s, opacity 0.2s;
+    overflow: hidden;
+    opacity: 1;
+    width: var(--toolbar-width);
+    flex-shrink: 0;
+    position: relative;
+}
+
+#left-toolbar::after {
+    content: '';
+    position: absolute;
+    right: -14px;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+}
+
+#left-toolbar:hover,
+#left-toolbar:hover ~ #canvas-container {
+    opacity: 1;
+}
+
+#left-toolbar:not(:hover) {
+    width: 8px;
+    opacity: 0;
+}
+
+#left-toolbar:not(:hover) .tool-btn {
+    display: none;
+}
+
+#left-toolbar {
     width: var(--toolbar-width);
     background: var(--bg-secondary);
     border-right: 1px solid var(--border);
@@ -191,6 +230,31 @@ body {
     opacity: 0;
     width: 4px;
     flex-shrink: 0;
+    position: relative;
+}
+
+#right-panels::before {
+    content: '';
+    position: absolute;
+    left: -14px;
+    top: 0;
+    bottom: 0;
+    width: 14px;
+}
+
+#right-panels:hover {
+    width: 260px;
+    opacity: 1;
+    padding: 8px;
+}
+
+#right-panels:not(:hover) {
+    width: 4px;
+    opacity: 0;
+}
+
+#right-panels:not(:hover) > * {
+    display: none;
 }
 
 #right-panels:hover {
