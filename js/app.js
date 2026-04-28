@@ -333,24 +333,30 @@ class App {
     pasteSelection() {
         if (!this.clipboard) return;
         
-        const { pixels, width, height, x, y } = this.clipboard;
-        const layerIdx = this.state.get('activeLayer');
-        const layer = this.state.get('layers')[layerIdx];
-        if (!layer) return;
+        var layers = this.state.get('layers');
+        var newName = 'Pasted ' + (layers.length + 1);
+        layers.push(this.state.createLayer(newName));
+        var targetIdx = layers.length - 1;
+        this.state.set('layers', layers);
+        this.state.set('activeLayer', targetIdx);
+        this.layersPanel.render();
         
-        const canvasWidth = this.canvas.width;
-        for (let py = 0; py < height; py++) {
-            for (let px = 0; px < width; px++) {
-                const dstX = x + px;
-                const dstY = y + py;
+        var layer = layers[targetIdx];
+        var clipboard = this.clipboard;
+        var canvasWidth = this.canvas.width;
+        
+        for (var py = 0; py < clipboard.height; py++) {
+            for (var px = 0; px < clipboard.width; px++) {
+                var dstX = clipboard.x + px;
+                var dstY = clipboard.y + py;
                 if (dstX >= 0 && dstX < canvasWidth && dstY >= 0 && dstY < this.canvas.height) {
-                    const srcIdx = (py * width + px) * 4;
-                    const dstIdx = (dstY * canvasWidth + dstX) * 4;
-                    if (pixels[srcIdx + 3] > 0) {
-                        layer.pixels[dstIdx] = pixels[srcIdx];
-                        layer.pixels[dstIdx + 1] = pixels[srcIdx + 1];
-                        layer.pixels[dstIdx + 2] = pixels[srcIdx + 2];
-                        layer.pixels[dstIdx + 3] = pixels[srcIdx + 3];
+                    var srcIdx = (py * clipboard.width + px) * 4;
+                    var dstIdx = (dstY * canvasWidth + dstX) * 4;
+                    if (clipboard.pixels[srcIdx + 3] > 0) {
+                        layer.pixels[dstIdx] = clipboard.pixels[srcIdx];
+                        layer.pixels[dstIdx + 1] = clipboard.pixels[srcIdx + 1];
+                        layer.pixels[dstIdx + 2] = clipboard.pixels[srcIdx + 2];
+                        layer.pixels[dstIdx + 3] = clipboard.pixels[srcIdx + 3];
                     }
                 }
             }
