@@ -181,22 +181,20 @@ body {
 }
 
 #right-panels {
-    width: var(--panel-width);
     background: var(--bg-secondary);
     border-left: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    resize: horizontal;
-    min-width: 4px;
-    max-width: 400px;
+    overflow-x: hidden;
     transition: width 0.2s, opacity 0.2s;
     opacity: 0;
-    padding: 0;
+    width: 4px;
+    flex-shrink: 0;
 }
 
 #right-panels:hover {
-    width: var(--panel-width);
+    width: 260px;
     opacity: 1;
     padding: 8px;
 }
