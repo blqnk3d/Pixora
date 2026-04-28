@@ -72,7 +72,7 @@ export class CanvasEngine {
         this.element.style.width = this.width + 'px';
         this.element.style.height = this.height + 'px';
         this.element.style.transform = `scale(${this.zoom})`;
-        this.element.style.transformOrigin = 'top left';
+        this.element.style.transformOrigin = 'center center';
     }
 
     zoomIn(mouseX, mouseY) {
