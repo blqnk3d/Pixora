@@ -87,8 +87,8 @@ class App {
             this.currentTool.activate();
         }
         this.toolbar.updateActive(name);
-        this.toolSettings.render();
         this.state.set('currentTool', name);
+        this.toolSettings.render();
     }
 
     deselectAll() {
