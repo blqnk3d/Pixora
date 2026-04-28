@@ -38,6 +38,7 @@ export class EllipseSelectTool {
         if (!this.selection) return;
         const { x1, y1, x2, y2 } = this.selection;
         const ctx = this.canvas.ctx;
+        const offset = this.canvas.selectionOffset || 0;
 
         const minX = Math.min(x1, x2);
         const maxX = Math.max(x1, x2);
@@ -48,13 +49,25 @@ export class EllipseSelectTool {
         const radiusX = (maxX - minX) / 2;
         const radiusY = (maxY - minY) / 2;
 
-        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
+
+        // White dash
+        ctx.strokeStyle = '#ffffff';
         ctx.setLineDash([3, 3]);
+        ctx.lineDashOffset = -offset;
         ctx.beginPath();
         ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.stroke();
+
+        // Black dash
+        ctx.strokeStyle = '#000000';
+        ctx.lineDashOffset = -offset + 3;
+        ctx.beginPath();
+        ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
         ctx.setLineDash([]);
+        ctx.lineDashOffset = 0;
     }
 
     getSelectedPixels() {

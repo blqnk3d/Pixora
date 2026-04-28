@@ -47,17 +47,28 @@ export class SelectorTool {
         if (!this.selection) return;
         const { x1, y1, x2, y2 } = this.selection;
         const ctx = this.canvas.ctx;
+        const offset = this.canvas.selectionOffset || 0;
 
         const minX = Math.min(x1, x2);
         const maxX = Math.max(x1, x2);
         const minY = Math.min(y1, y2);
         const maxY = Math.max(y1, y2);
 
-        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
+        
+        // White dash
+        ctx.strokeStyle = '#ffffff';
         ctx.setLineDash([3, 3]);
-        ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+        ctx.lineDashOffset = -offset;
+        ctx.strokeRect(minX + 0.5, minY + 0.5, maxX - minX, maxY - minY);
+        
+        // Black dash (offset)
+        ctx.strokeStyle = '#000000';
+        ctx.lineDashOffset = -offset + 3;
+        ctx.strokeRect(minX + 0.5, minY + 0.5, maxX - minX, maxY - minY);
+        
         ctx.setLineDash([]);
+        ctx.lineDashOffset = 0;
     }
 
     getSelectedPixels() {

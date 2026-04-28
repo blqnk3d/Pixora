@@ -39,6 +39,7 @@ class App {
         this.isPanning = false;
         this.panStart = null;
         this.scrollStart = null;
+        this.isSpacePressed = false;
 
         this.menu = new MenuBar(this);
         this.toolbar = new Toolbar(this);
@@ -142,11 +143,11 @@ class App {
 
         canvasEl.addEventListener('mousedown', (e) => {
             e.preventDefault();
-            if (e.button === 1) {
+            if (e.button === 1 || (e.button === 0 && this.isSpacePressed)) {
                 this.isPanning = true;
                 this.panStart = { x: e.clientX, y: e.clientY };
                 this.scrollStart = { x: container.scrollLeft, y: container.scrollTop };
-                canvasEl.style.cursor = 'grab';
+                canvasEl.style.cursor = 'grabbing';
             } else if (e.button === 2) {
                 const pos = this.canvas.getPixelPosition(e);
                 if (pos) {
@@ -173,7 +174,7 @@ class App {
         });
 
         document.addEventListener('wheel', (e) => {
-            if (e.ctrlKey || e.metaKey) {
+            if (e.ctrlKey || e.metaKey || e.altKey) {
                 e.preventDefault();
             }
         }, { passive: false });
@@ -184,7 +185,7 @@ class App {
                 const dy = (e.clientY - this.panStart.y);
                 container.scrollLeft = this.scrollStart.x - dx;
                 container.scrollTop = this.scrollStart.y - dy;
-            } else {
+            } else if (!this.isSpacePressed) {
                 if (this.currentTool && this.currentTool.onMouseMove) {
                     const pos = this.canvas.getPixelPosition(e);
                     this.statusBar.updatePosition(pos);
@@ -211,9 +212,9 @@ class App {
         });
 
         document.addEventListener('mouseup', (e) => {
-            if (e.button === 1 && this.isPanning) {
+            if ((e.button === 1 || e.button === 0) && this.isPanning) {
                 this.isPanning = false;
-                canvasEl.style.cursor = '';
+                canvasEl.style.cursor = this.isSpacePressed ? 'grab' : 'crosshair';
             } else {
                 if (this.currentTool && this.currentTool.onMouseUp) {
                     this.currentTool.onMouseUp(e);
@@ -223,17 +224,34 @@ class App {
         });
 
         window.addEventListener('wheel', (e) => {
-            if (e.ctrlKey || e.metaKey) {
+            if (e.ctrlKey || e.metaKey || e.altKey) {
                 e.preventDefault();
                 if (e.deltaY > 0) {
-                    self.canvas.zoomOut();
+                    self.canvas.zoomOut(e);
                 } else {
-                    self.canvas.zoomIn();
+                    self.canvas.zoomIn(e);
                 }
             }
         });
 
-        document.addEventListener('keydown', (e) => this.onKeyDown(e));
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !this.isSpacePressed && e.target === document.body) {
+                this.isSpacePressed = true;
+                this.canvas.element.style.cursor = 'grab';
+                e.preventDefault();
+            }
+            this.onKeyDown(e);
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'Space') {
+                this.isSpacePressed = false;
+                this.canvas.element.style.cursor = 'crosshair';
+                if (this.isPanning) {
+                    this.isPanning = false;
+                }
+            }
+        });
 
         document.body.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -307,17 +325,17 @@ class App {
                 case 'o': this.selectTool('ellipseSelect'); break;
                 case '[':
                     if (this.state.get('currentTool') === 'magicSelect') {
-                        this.state.set('magicWandTolerance', Math.max(0, this.state.get('magicWandTolerance') - 5));
+                        this.state.set('magicWandTolerance', Math.max(0, this.state.get('magicWandTolerance') - 1));
                     } else {
-                        this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 2));
+                        this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 1));
                     }
                     this.toolSettings.render();
                     break;
                 case ']':
                     if (this.state.get('currentTool') === 'magicSelect') {
-                        this.state.set('magicWandTolerance', Math.min(255, this.state.get('magicWandTolerance') + 5));
+                        this.state.set('magicWandTolerance', Math.min(255, this.state.get('magicWandTolerance') + 1));
                     } else {
-                        this.state.set('brushSize', Math.min(31, this.state.get('brushSize') + 2));
+                        this.state.set('brushSize', Math.min(31, this.state.get('brushSize') + 1));
                     }
                     this.toolSettings.render();
                     break;

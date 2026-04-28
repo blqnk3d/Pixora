@@ -17,12 +17,25 @@ export class CanvasEngine {
         this.showPreview = false;
         this.lastScrollX = 0;
         this.lastScrollY = 0;
+        this.selectionOffset = 0;
 
         this.ctx.imageSmoothingEnabled = false;
         this.applyZoomTransform();
         this.centerCanvas();
         this.updateCachedRect();
         this.setupScrollListener();
+        this.startAnimationLoop();
+    }
+
+    startAnimationLoop() {
+        const animate = () => {
+            if (window.app && window.app.hasSelection()) {
+                this.selectionOffset = (this.selectionOffset + 0.5) % 6;
+                this.render();
+            }
+            requestAnimationFrame(animate);
+        };
+        requestAnimationFrame(animate);
     }
 
     setupScrollListener() {
@@ -56,18 +69,36 @@ export class CanvasEngine {
         return { x, y };
     }
 
-    setZoom(newZoom) {
+    setZoom(newZoom, focalPoint = null) {
         const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
         if (Math.abs(this.zoom - clampedZoom) < 0.001) return;
         
         const oldZoom = this.zoom;
+        const container = document.getElementById('canvas-container');
+        
+        let mouseX, mouseY;
+        if (focalPoint && container) {
+            const rect = container.getBoundingClientRect();
+            mouseX = focalPoint.clientX - rect.left + container.scrollLeft;
+            mouseY = focalPoint.clientY - rect.top + container.scrollTop;
+        }
+
         this.zoom = clampedZoom;
         this.applyZoomTransform();
         this.updateCachedRect();
         this.render();
         this.state.set('zoom', this.zoom);
         
-        this.centerCanvas();
+        if (focalPoint && container) {
+            const rect = container.getBoundingClientRect();
+            const scale = this.zoom / oldZoom;
+            const newScrollX = mouseX * scale - (focalPoint.clientX - rect.left);
+            const newScrollY = mouseY * scale - (focalPoint.clientY - rect.top);
+            container.scrollLeft = newScrollX;
+            container.scrollTop = newScrollY;
+        } else {
+            this.centerCanvas();
+        }
     }
 
     applyZoomTransform() {
@@ -77,14 +108,12 @@ export class CanvasEngine {
         this.element.style.transformOrigin = '';
     }
 
-    zoomIn() {
-        const oldZoom = this.zoom;
-        this.setZoom(this.zoom * 1.25);
+    zoomIn(focalPoint = null) {
+        this.setZoom(this.zoom * 1.25, focalPoint);
     }
 
-    zoomOut() {
-        const oldZoom = this.zoom;
-        this.setZoom(this.zoom / 1.25);
+    zoomOut(focalPoint = null) {
+        this.setZoom(this.zoom / 1.25, focalPoint);
     }
 
     centerCanvas() {

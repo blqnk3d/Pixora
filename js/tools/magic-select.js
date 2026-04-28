@@ -93,14 +93,25 @@ export class MagicSelectTool {
         const ctx = this.canvas.ctx;
         const width = this.canvas.width;
         const { x1, y1, x2, y2, mask } = this.selection;
+        const offset = this.canvas.selectionOffset || 0;
 
-        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 1;
+        
+        // White dash
+        ctx.strokeStyle = '#ffffff';
         ctx.setLineDash([3, 3]);
-        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+        ctx.lineDashOffset = -offset;
+        ctx.strokeRect(x1 + 0.5, y1 + 0.5, x2 - x1, y2 - y1);
+        
+        // Black dash
+        ctx.strokeStyle = '#000000';
+        ctx.lineDashOffset = -offset + 3;
+        ctx.strokeRect(x1 + 0.5, y1 + 0.5, x2 - x1, y2 - y1);
+        
         ctx.setLineDash([]);
+        ctx.lineDashOffset = 0;
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         for (let y = y1; y <= y2; y++) {
             for (let x = x1; x <= x2; x++) {
                 if (mask[y * width + x]) {
