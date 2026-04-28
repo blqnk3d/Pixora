@@ -9,28 +9,17 @@ export class StatusBar {
         this.pendingPos = null;
         this.frameRequested = false;
         this.render();
+        this.app.state.on('zoom', () => this.updateZoomDisplay());
     }
 
     render() {
-        const toolName = this.app.state.get('currentTool');
-        const formattedName = toolName.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-        this.element.innerHTML = `
-            <div class="status-item">
-                <span>Pos:</span>
-                <span id="cursor-pos">0, 0</span>
-            </div>
-            <div class="status-item">
-                <span>Zoom:</span>
-                <span id="zoom-level">${this.app.canvas.zoom}x</span>
-            </div>
-            <div class="status-item">
-                <span>Size:</span>
-                <span id="canvas-size">${this.app.canvas.width} × ${this.app.canvas.height}</span>
-            </div>
-            <div class="status-item" style="margin-left:auto">
-                <span id="tool-name">${formattedName}</span>
-            </div>
-        `;
+        var toolName = this.app.state.get('currentTool');
+        var formattedName = toolName.replace(/([A-Z])/g, ' $1').replace(/^./, function(str) { return str.toUpperCase(); });
+        var html = '<div class="status-item"><span>Pos:</span><span id="cursor-pos">0, 0</span></div>';
+        html += '<div class="status-item"><span>Zoom:</span><span id="zoom-level">1x</span></div>';
+        html += '<div class="status-item"><span>Size:</span><span id="canvas-size">' + this.app.canvas.width + ' x ' + this.app.canvas.height + '</span></div>';
+        html += '<div class="status-item" style="margin-left:auto"><span id="tool-name">' + formattedName + '</span></div>';
+        this.element.innerHTML = html;
         this.cursorPosEl = document.getElementById('cursor-pos');
         this.zoomLevelEl = document.getElementById('zoom-level');
         this.canvasSizeEl = document.getElementById('canvas-size');
@@ -41,17 +30,26 @@ export class StatusBar {
         this.pendingPos = pos;
         if (!this.frameRequested) {
             this.frameRequested = true;
-            requestAnimationFrame(() => {
-                if (this.cursorPosEl && this.pendingPos) {
-                    this.cursorPosEl.textContent = `${this.pendingPos.x}, ${this.pendingPos.y}`;
+            var self = this;
+            requestAnimationFrame(function() {
+                if (self.cursorPosEl && self.pendingPos) {
+                    self.cursorPosEl.textContent = self.pendingPos.x + ', ' + self.pendingPos.y;
                 }
-                this.frameRequested = false;
-                this.pendingPos = null;
+                self.frameRequested = false;
+                self.pendingPos = null;
             });
         }
     }
 
+    updateZoomDisplay() {
+        if (this.zoomLevelEl) {
+            var z = this.app.canvas.zoom;
+            var text = z < 10 ? z.toFixed(2) + 'x' : z.toFixed(1) + 'x';
+            this.zoomLevelEl.textContent = text;
+        }
+    }
+
     update() {
-        this.render();
+        this.updateZoomDisplay();
     }
 }

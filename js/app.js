@@ -140,8 +140,8 @@ class App {
 
         document.addEventListener('mousemove', (e) => {
             if (this.isPanning) {
-                const dx = e.clientX - this.panStart.x;
-                const dy = e.clientY - this.panStart.y;
+                const dx = (e.clientX - this.panStart.x) * 1.5;
+                const dy = (e.clientY - this.panStart.y) * 1.5;
                 container.scrollLeft = this.scrollStart.x + dx;
                 container.scrollTop = this.scrollStart.y + dy;
             } else {

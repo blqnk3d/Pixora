@@ -4,9 +4,9 @@ export class CanvasEngine {
         this.ctx = this.element.getContext('2d');
         this.state = state;
         this.history = history;
-        this.zoomLevels = [1, 2, 4, 6, 8, 10, 12, 16, 20, 24, 32, 48, 64];
-        this.zoomIndex = 5;
-        this.zoom = this.zoomLevels[this.zoomIndex];
+        this.zoom = 1;
+        this.minZoom = 0.1;
+        this.maxZoom = 128;
         this.isDrawing = false;
         this.renderPending = false;
         this.previewRenderPending = false;
@@ -52,16 +52,20 @@ export class CanvasEngine {
         return { x, y };
     }
 
-    setZoom(newZoom) {
-        const idx = this.zoomLevels.indexOf(newZoom);
-        if (idx !== -1) {
-            this.zoomIndex = idx;
-            this.zoom = newZoom;
-        }
+    setZoom(newZoom, mouseX, mouseY) {
+        const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
+        if (Math.abs(this.zoom - clampedZoom) < 0.001) return;
+        
+        const oldZoom = this.zoom;
+        this.zoom = clampedZoom;
         this.applyZoomTransform();
         this.updateCachedRect();
         this.render();
         this.state.set('zoom', this.zoom);
+        
+        if (mouseX !== undefined && mouseY !== undefined) {
+            this.scrollToMouse(mouseX, mouseY, oldZoom, clampedZoom);
+        }
     }
 
     applyZoomTransform() {
@@ -72,40 +76,29 @@ export class CanvasEngine {
     }
 
     zoomIn(mouseX, mouseY) {
-        if (this.zoomIndex < this.zoomLevels.length - 1) {
-            this.zoomIndex++;
-            this.zoom = this.zoomLevels[this.zoomIndex];
-            this.applyZoomTransform();
-            this.updateCachedRect();
-            this.render();
-            this.state.set('zoom', this.zoom);
-            if (mouseX !== undefined && mouseY !== undefined) {
-                this.scrollToMouse(mouseX, mouseY);
-            }
-        }
+        this.setZoom(this.zoom * 1.25, mouseX, mouseY);
     }
 
     zoomOut(mouseX, mouseY) {
-        if (this.zoomIndex > 0) {
-            this.zoomIndex--;
-            this.zoom = this.zoomLevels[this.zoomIndex];
-            this.applyZoomTransform();
-            this.updateCachedRect();
-            this.render();
-            this.state.set('zoom', this.zoom);
-            if (mouseX !== undefined && mouseY !== undefined) {
-                this.scrollToMouse(mouseX, mouseY);
-            }
-        }
+        this.setZoom(this.zoom / 1.25, mouseX, mouseY);
     }
 
-    scrollToMouse(mouseX, mouseY) {
+    scrollToMouse(mouseX, mouseY, oldZoom, newZoom) {
         const container = document.getElementById('canvas-container');
         if (!container) return;
-        const targetX = mouseX - container.clientWidth / 2;
-        const targetY = mouseY - container.clientHeight / 2;
-        container.scrollLeft = Math.max(0, targetX);
-        container.scrollTop = Math.max(0, targetY);
+        
+        if (oldZoom !== undefined && newZoom !== undefined) {
+            const scale = newZoom / oldZoom;
+            const newScrollX = mouseX * scale - container.clientWidth / 2;
+            const newScrollY = mouseY * scale - container.clientHeight / 2;
+            container.scrollLeft = Math.max(0, newScrollX);
+            container.scrollTop = Math.max(0, newScrollY);
+        } else {
+            const targetX = mouseX - container.clientWidth / 2;
+            const targetY = mouseY - container.clientHeight / 2;
+            container.scrollLeft = Math.max(0, targetX);
+            container.scrollTop = Math.max(0, targetY);
+        }
     }
 
     render() {
