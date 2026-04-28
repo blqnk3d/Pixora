@@ -46,29 +46,27 @@ export class SelectorTool {
     drawSelection() {
         if (!this.selection) return;
         const { x1, y1, x2, y2 } = this.selection;
-        const ctx = this.canvas.ctx;
-        const offset = this.canvas.selectionOffset || 0;
+        const zoom = this.canvas.zoom;
+        const ctx = this.canvas.overlayCtx;
 
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        const minY = Math.min(y1, y2);
-        const maxY = Math.max(y1, y2);
+        // Overlay is already sized to screen pixels, so we scale coordinates
+        const minX = Math.min(x1, x2) * zoom;
+        const maxX = (Math.max(x1, x2) + 1) * zoom;
+        const minY = Math.min(y1, y2) * zoom;
+        const maxY = (Math.max(y1, y2) + 1) * zoom;
 
         ctx.lineWidth = 1;
         
-        // White dash
-        ctx.strokeStyle = '#ffffff';
-        ctx.setLineDash([3, 3]);
-        ctx.lineDashOffset = -offset;
-        ctx.strokeRect(minX + 0.5, minY + 0.5, maxX - minX, maxY - minY);
-        
-        // Black dash (offset)
+        // Outer black border
         ctx.strokeStyle = '#000000';
-        ctx.lineDashOffset = -offset + 3;
-        ctx.strokeRect(minX + 0.5, minY + 0.5, maxX - minX, maxY - minY);
+        ctx.strokeRect(minX + 0.5, minY + 0.5, maxX - minX - 1, maxY - minY - 1);
+        
+        // Inner white dashed border
+        ctx.strokeStyle = '#ffffff';
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(minX + 0.5, minY + 0.5, maxX - minX - 1, maxY - minY - 1);
         
         ctx.setLineDash([]);
-        ctx.lineDashOffset = 0;
     }
 
     getSelectedPixels() {

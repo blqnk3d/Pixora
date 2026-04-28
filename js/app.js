@@ -40,6 +40,7 @@ class App {
         this.panStart = null;
         this.scrollStart = null;
         this.isSpacePressed = false;
+        this.lastMousePos = null;
 
         this.menu = new MenuBar(this);
         this.toolbar = new Toolbar(this);
@@ -188,6 +189,7 @@ class App {
         }, { passive: false });
 
         document.addEventListener('mousemove', (e) => {
+            this.lastMousePos = { clientX: e.clientX, clientY: e.clientY };
             if (this.isPanning) {
                 const dx = (e.clientX - this.panStart.x);
                 const dy = (e.clientY - this.panStart.y);
@@ -322,6 +324,25 @@ class App {
                 case 'v':
                     e.preventDefault();
                     this.pasteSelection();
+                    break;
+                case '+':
+                case '=':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        this.canvas.zoomIn();
+                    }
+                    break;
+                case '-':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        this.canvas.zoomOut();
+                    }
+                    break;
+                case '0':
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        this.canvas.setZoom(1);
+                    }
                     break;
             }
         } else {

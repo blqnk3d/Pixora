@@ -37,13 +37,14 @@ export class EllipseSelectTool {
     drawSelection() {
         if (!this.selection) return;
         const { x1, y1, x2, y2 } = this.selection;
-        const ctx = this.canvas.ctx;
-        const offset = this.canvas.selectionOffset || 0;
+        const zoom = this.canvas.zoom;
+        const ctx = this.canvas.overlayCtx;
 
-        const minX = Math.min(x1, x2);
-        const maxX = Math.max(x1, x2);
-        const minY = Math.min(y1, y2);
-        const maxY = Math.max(y1, y2);
+        const minX = Math.min(x1, x2) * zoom;
+        const maxX = (Math.max(x1, x2) + 1) * zoom;
+        const minY = Math.min(y1, y2) * zoom;
+        const maxY = (Math.max(y1, y2) + 1) * zoom;
+        
         const centerX = (minX + maxX) / 2;
         const centerY = (minY + maxY) / 2;
         const radiusX = (maxX - minX) / 2;
@@ -51,23 +52,20 @@ export class EllipseSelectTool {
 
         ctx.lineWidth = 1;
 
-        // White dash
-        ctx.strokeStyle = '#ffffff';
-        ctx.setLineDash([3, 3]);
-        ctx.lineDashOffset = -offset;
+        // Outer black border
+        ctx.strokeStyle = '#000000';
         ctx.beginPath();
         ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Black dash
-        ctx.strokeStyle = '#000000';
-        ctx.lineDashOffset = -offset + 3;
+        // Inner white dash
+        ctx.strokeStyle = '#ffffff';
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
         ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, Math.PI * 2);
         ctx.stroke();
 
         ctx.setLineDash([]);
-        ctx.lineDashOffset = 0;
     }
 
     getSelectedPixels() {

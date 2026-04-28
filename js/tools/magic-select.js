@@ -90,32 +90,35 @@ export class MagicSelectTool {
 
     drawSelection() {
         if (!this.selection) return;
-        const ctx = this.canvas.ctx;
+        const ctx = this.canvas.overlayCtx;
         const width = this.canvas.width;
         const { x1, y1, x2, y2, mask } = this.selection;
-        const offset = this.canvas.selectionOffset || 0;
+        const zoom = this.canvas.zoom;
+
+        const screenX1 = x1 * zoom;
+        const screenX2 = (x2 + 1) * zoom;
+        const screenY1 = y1 * zoom;
+        const screenY2 = (y2 + 1) * zoom;
 
         ctx.lineWidth = 1;
         
-        // White dash
-        ctx.strokeStyle = '#ffffff';
-        ctx.setLineDash([3, 3]);
-        ctx.lineDashOffset = -offset;
-        ctx.strokeRect(x1 + 0.5, y1 + 0.5, x2 - x1, y2 - y1);
-        
-        // Black dash
+        // Outer black border
         ctx.strokeStyle = '#000000';
-        ctx.lineDashOffset = -offset + 3;
-        ctx.strokeRect(x1 + 0.5, y1 + 0.5, x2 - x1, y2 - y1);
+        ctx.strokeRect(screenX1 + 0.5, screenY1 + 0.5, screenX2 - screenX1 - 1, screenY2 - screenY1 - 1);
+        
+        // Inner white dash
+        ctx.strokeStyle = '#ffffff';
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(screenX1 + 0.5, screenY1 + 0.5, screenX2 - screenX1 - 1, screenY2 - screenY1 - 1);
         
         ctx.setLineDash([]);
-        ctx.lineDashOffset = 0;
 
+        // Fill mask on overlay
         ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
         for (let y = y1; y <= y2; y++) {
             for (let x = x1; x <= x2; x++) {
                 if (mask[y * width + x]) {
-                    ctx.fillRect(x, y, 1, 1);
+                    ctx.fillRect(x * zoom, y * zoom, zoom, zoom);
                 }
             }
         }

@@ -222,13 +222,23 @@ body:not(.bars-visible) #left-toolbar:not(:hover) .tool-btn {
     box-sizing: border-box;
 }
 
-#pixel-canvas {
+#pixel-canvas, #overlay-canvas {
     image-rendering: pixelated;
     image-rendering: crisp-edges;
     image-rendering: -moz-crisp-edges;
     cursor: crosshair;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
     flex-shrink: 0;
+}
+
+#pixel-canvas {
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    background-color: white; /* Base color for transparency visibility */
+}
+
+#overlay-canvas {
+    position: absolute;
+    pointer-events: none;
+    image-rendering: auto; /* Smoother lines for UI */
 }
 
 #right-panels {

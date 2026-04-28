@@ -2,6 +2,8 @@ export class CanvasEngine {
     constructor(canvasId, state, history) {
         this.element = document.getElementById(canvasId);
         this.ctx = this.element.getContext('2d');
+        this.overlay = document.getElementById('overlay-canvas');
+        this.overlayCtx = this.overlay.getContext('2d');
         this.state = state;
         this.history = history;
         this.canvasWidth = state.get('canvasWidth') || 32;
@@ -17,25 +19,12 @@ export class CanvasEngine {
         this.showPreview = false;
         this.lastScrollX = 0;
         this.lastScrollY = 0;
-        this.selectionOffset = 0;
 
         this.ctx.imageSmoothingEnabled = false;
         this.applyZoomTransform();
         this.centerCanvas();
         this.updateCachedRect();
         this.setupScrollListener();
-        this.startAnimationLoop();
-    }
-
-    startAnimationLoop() {
-        const animate = () => {
-            if (window.app && window.app.hasSelection()) {
-                this.selectionOffset = (this.selectionOffset + 0.5) % 6;
-                this.render();
-            }
-            requestAnimationFrame(animate);
-        };
-        requestAnimationFrame(animate);
     }
 
     setupScrollListener() {
@@ -76,6 +65,11 @@ export class CanvasEngine {
         const oldZoom = this.zoom;
         const container = document.getElementById('canvas-container');
         
+        // If no focal point provided, try to use the last known mouse position from app
+        if (!focalPoint && window.app && window.app.lastMousePos) {
+            focalPoint = window.app.lastMousePos;
+        }
+
         let mouseX, mouseY;
         if (focalPoint && container) {
             const rect = container.getBoundingClientRect();
@@ -102,18 +96,27 @@ export class CanvasEngine {
     }
 
     applyZoomTransform() {
-        this.element.style.width = Math.floor(this.canvasWidth * this.zoom) + 'px';
-        this.element.style.height = Math.floor(this.canvasHeight * this.zoom) + 'px';
+        const w = Math.floor(this.canvasWidth * this.zoom);
+        const h = Math.floor(this.canvasHeight * this.zoom);
+        this.element.style.width = w + 'px';
+        this.element.style.height = h + 'px';
+        this.overlay.style.width = w + 'px';
+        this.overlay.style.height = h + 'px';
+        
+        // Internal overlay size matches zoomed display size for 1:1 screen pixel drawing
+        this.overlay.width = w;
+        this.overlay.height = h;
+
         this.element.style.transform = '';
         this.element.style.transformOrigin = '';
     }
 
     zoomIn(focalPoint = null) {
-        this.setZoom(this.zoom * 1.25, focalPoint);
+        this.setZoom(this.zoom * 1.2, focalPoint);
     }
 
     zoomOut(focalPoint = null) {
-        this.setZoom(this.zoom / 1.25, focalPoint);
+        this.setZoom(this.zoom / 1.2, focalPoint);
     }
 
     centerCanvas() {
@@ -124,11 +127,8 @@ export class CanvasEngine {
         const containerWidth = container.clientWidth;
         const containerHeight = container.clientHeight;
         
-        // Use a small timeout to ensure layout has updated
-        setTimeout(() => {
-            container.scrollLeft = (workspace.scrollWidth - containerWidth) / 2;
-            container.scrollTop = (workspace.scrollHeight - containerHeight) / 2;
-        }, 0);
+        container.scrollLeft = (workspace.scrollWidth - containerWidth) / 2;
+        container.scrollTop = (workspace.scrollHeight - containerHeight) / 2;
     }
 
     scrollToMouse(mouseX, mouseY, oldZoom, newZoom) {
@@ -154,6 +154,7 @@ export class CanvasEngine {
         if (this.renderPending) return;
         this.renderPending = true;
         requestAnimationFrame(() => {
+            this.overlayCtx.clearRect(0, 0, this.overlay.width, this.overlay.height);
             this.renderNow();
             this.renderPending = false;
         });
