@@ -122,6 +122,7 @@ class App {
     bindEvents() {
         const canvasEl = this.canvas.element;
         const container = document.getElementById('canvas-container');
+        const self = this;
 
         canvasEl.addEventListener('mousedown', (e) => {
             e.preventDefault();
@@ -137,6 +138,12 @@ class App {
                 }
             }
         });
+
+        document.addEventListener('wheel', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                e.preventDefault();
+            }
+        }, { passive: false });
 
         document.addEventListener('mousemove', (e) => {
             if (this.isPanning) {
@@ -173,16 +180,15 @@ class App {
             }
         });
 
-        canvasEl.addEventListener('wheel', (e) => {
+        window.addEventListener('wheel', (e) => {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
-                const rect = canvasEl.getBoundingClientRect();
-                const mouseX = e.clientX - rect.left;
-                const mouseY = e.clientY - rect.top;
+                const mouseX = e.clientX;
+                const mouseY = e.clientY;
                 if (e.deltaY > 0) {
-                    this.canvas.zoomOut(mouseX, mouseY);
+                    self.canvas.zoomOut(mouseX, mouseY);
                 } else {
-                    this.canvas.zoomIn(mouseX, mouseY);
+                    self.canvas.zoomIn(mouseX, mouseY);
                 }
             }
         });
