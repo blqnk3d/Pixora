@@ -1,44 +1,45 @@
 export class Exporter {
     constructor(app) {
         this.app = app;
-        this.exportCanvas = null;
-        this.exportCtx = null;
-    }
-
-    getExportCanvas() {
-        const width = this.app.canvas.width;
-        const height = this.app.canvas.height;
-        if (!this.exportCanvas || this.exportCanvas.width !== width || this.exportCanvas.height !== height) {
-            this.exportCanvas = new OffscreenCanvas(width, height);
-            this.exportCtx = this.exportCanvas.getContext('2d');
-            this.exportCtx.imageSmoothingEnabled = false;
-        }
-        this.exportCtx.clearRect(0, 0, width, height);
-        return { canvas: this.exportCanvas, ctx: this.exportCtx };
     }
 
     savePNG() {
-        const { canvas, ctx } = this.getExportCanvas();
-        const width = canvas.width;
-        const height = canvas.height;
-        const layers = this.app.state.get('layers');
-
-        for (let i = 0; i < layers.length; i++) {
-            const layer = layers[i];
+        var width = this.app.canvas.width;
+        var height = this.app.canvas.height;
+        var exportCanvas = document.createElement('canvas');
+        exportCanvas.width = width;
+        exportCanvas.height = height;
+        var ctx = exportCanvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+        
+        var layers = this.app.state.get('layers');
+        var offscreenCanvas = document.createElement('canvas');
+        offscreenCanvas.width = width;
+        offscreenCanvas.height = height;
+        var offCtx = offscreenCanvas.getContext('2d');
+        
+        for (var i = 0; i < layers.length; i++) {
+            var layer = layers[i];
             if (!layer.visible) continue;
-            const imageData = ctx.createImageData(width, height);
+            
+            offCtx.clearRect(0, 0, width, height);
+            var imageData = offCtx.createImageData(width, height);
             imageData.data.set(layer.pixels);
-            ctx.putImageData(imageData, 0, 0);
+            offCtx.putImageData(imageData, 0, 0);
+            
             ctx.globalAlpha = layer.opacity ?? 1;
+            ctx.drawImage(offscreenCanvas, 0, 0);
         }
-
-        canvas.toBlob(blob => {
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+        
+        ctx.globalAlpha = 1;
+        
+        exportCanvas.toBlob(function(blob) {
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
             a.href = url;
             a.download = 'pixel-art.png';
             a.click();
-            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
         }, 'image/png');
     }
 
