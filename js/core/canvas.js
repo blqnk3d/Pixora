@@ -217,10 +217,7 @@ renderNow() {
         const prevX = pos.x - offset;
         const prevY = pos.y - offset;
 
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.lineWidth = 3;
-        this.ctx.strokeRect(prevX, prevY, size, size);
-        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(prevX, prevY, size, size);
     }
