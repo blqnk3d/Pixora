@@ -12,7 +12,10 @@ export class LayersPanel {
         const activeIdx = this.app.state.get('activeLayer');
 
         this.element.innerHTML = `
-            <div class="panel-title">Layers</div>
+            <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
+                Layers
+                <button class="btn btn-small" id="add-layer-btn" title="Add Layer (Ctrl+Shift+N)">+</button>
+            </div>
             <div id="layers-list">
                 ${layers.map((layer, i) => `
                     <div class="layer-item ${i === activeIdx ? 'active' : ''}" data-index="${i}" draggable="true">
@@ -33,6 +36,11 @@ export class LayersPanel {
     }
 
     bindEvents() {
+        const addBtn = document.getElementById('add-layer-btn');
+        if (addBtn) {
+            addBtn.addEventListener('click', () => this.addLayer());
+        }
+
         this.element.querySelectorAll('.layer-item').forEach(item => {
             item.addEventListener('click', (e) => {
                 if (e.target.dataset.action) return;
@@ -209,5 +217,13 @@ export class LayersPanel {
         layers[idx].dirty = true;
         this.app.state.set('layers', layers);
         this.app.canvas.render();
+    }
+
+    addLayer() {
+        const layers = this.app.state.get('layers');
+        layers.push(this.app.state.createLayer('Layer ' + (layers.length + 1)));
+        this.app.state.set('layers', layers);
+        this.app.state.set('activeLayer', layers.length - 1);
+        this.render();
     }
 }

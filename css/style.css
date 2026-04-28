@@ -172,10 +172,19 @@ body:not(.bars-visible) #left-toolbar:not(:hover) .tool-btn {
     cursor: pointer;
     border-radius: 4px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     font-size: 18px;
     transition: background 0.1s;
+    position: relative;
+}
+
+.tool-shortcut {
+    font-size: 8px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+    opacity: 0.7;
 }
 
 .tool-btn:hover {
@@ -311,6 +320,10 @@ body:not(.bars-visible) #right-panels:not(:hover) > * {
     overflow-y: auto;
 }
 
+#tool-settings {
+    flex-shrink: 0;
+}
+
 .color-picker-row {
     display: flex;
     gap: 8px;
@@ -415,6 +428,32 @@ body:not(.bars-visible) #right-panels:not(:hover) > * {
     padding: 2px;
     border-radius: 2px;
     font-size: 11px;
+}
+
+.setting-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.size-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.size-btn:hover {
+    filter: brightness(1.2);
 }
 
 .hsl-picker {
@@ -541,4 +580,20 @@ body:not(.bars-visible) #right-panels:not(:hover) > * {
 .btn-danger {
     background: var(--danger);
     color: var(--bg-primary);
+}
+
+.btn-small {
+    padding: 2px 8px;
+    font-size: 16px;
+    line-height: 1;
+    min-width: 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.btn-small:hover {
+    filter: brightness(1.2);
 }

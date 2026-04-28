@@ -5,6 +5,7 @@ import { MenuBar } from './ui/menu.js';
 import { Toolbar } from './ui/toolbar.js';
 import { ColorPanel } from './ui/colorpicker-simple.js';
 import { LayersPanel } from './ui/layers.js';
+import { ToolSettings } from './ui/toolsettings.js';
 import { StatusBar } from './ui/statusbar.js';
 import { Exporter } from './io/exporter.js';
 import { Importer } from './io/importer.js';
@@ -43,6 +44,7 @@ class App {
         this.toolbar = new Toolbar(this);
         this.colorPanel = new ColorPanel(this);
         this.layersPanel = new LayersPanel(this);
+        this.toolSettings = new ToolSettings(this);
         this.statusBar = new StatusBar(this);
         this.exporter = new Exporter(this);
         this.importer = new Importer(this);
@@ -56,6 +58,7 @@ class App {
         this.bindEvents();
         this.canvas.render();
         this.layersPanel.render();
+        this.toolSettings.render();
         this.statusBar.render();
         
         if (!this.state.get('hideBars')) {
@@ -84,6 +87,7 @@ class App {
             this.currentTool.activate();
         }
         this.toolbar.updateActive(name);
+        this.toolSettings.render();
         this.state.set('currentTool', name);
     }
 
@@ -309,6 +313,7 @@ class App {
                     } else {
                         this.state.set('brushSize', Math.max(1, this.state.get('brushSize') - 2));
                     }
+                    this.toolSettings.render();
                     break;
                 case ']':
                     if (this.state.get('currentTool') === 'magicSelect') {
@@ -316,11 +321,18 @@ class App {
                     } else {
                         this.state.set('brushSize', Math.min(31, this.state.get('brushSize') + 2));
                     }
+                    this.toolSettings.render();
                     break;
                 case 'escape': 
                     this.deselectAll(); 
                     if (this.tools.move?.cancelMove) {
                         this.tools.move.cancelMove();
+                    }
+                    break;
+                case 'n':
+                    if (e.ctrlKey && e.shiftKey) {
+                        e.preventDefault();
+                        this.layersPanel.addLayer();
                     }
                     break;
                 case 'delete':
