@@ -100,10 +100,10 @@ body {
 #left-toolbar::after {
     content: '';
     position: absolute;
-    right: -14px;
+    right: -20px;
     top: 0;
     bottom: 0;
-    width: 14px;
+    width: 20px;
 }
 
 #left-toolbar:hover,
@@ -236,10 +236,10 @@ body {
 #right-panels::before {
     content: '';
     position: absolute;
-    left: -14px;
+    left: -20px;
     top: 0;
     bottom: 0;
-    width: 14px;
+    width: 20px;
 }
 
 #right-panels:hover {
