@@ -214,68 +214,137 @@ export class TransformTool {
     }
 
     scaleLayer(scaleX, scaleY) {
-        const layer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];
-        if (!layer) return;
-
         this.history.beginStroke();
 
-        const width = this.canvas.width;
-        const height = this.canvas.height;
-        const newWidth = Math.round(width * scaleX);
-        const newHeight = Math.round(height * scaleY);
-        const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
-
-        for (let y = 0; y < newHeight; y++) {
-            for (let x = 0; x < newWidth; x++) {
-                const srcX = Math.floor(x / scaleX);
-                const srcY = Math.floor(y / scaleY);
-                if (srcX >= 0 && srcX < width && srcY >= 0 && srcY < height) {
-                    const srcIdx = (srcY * width + srcX) * 4;
-                    const dstIdx = (y * newWidth + x) * 4;
-                    newPixels[dstIdx] = layer.pixels[srcIdx];
-                    newPixels[dstIdx+1] = layer.pixels[srcIdx+1];
-                    newPixels[dstIdx+2] = layer.pixels[srcIdx+2];
-                    newPixels[dstIdx+3] = layer.pixels[srcIdx+3];
+        const oldWidth = this.canvas.width;
+        const oldHeight = this.canvas.height;
+        const newWidth = Math.round(oldWidth * scaleX);
+        const newHeight = Math.round(oldHeight * scaleY);
+        
+        const layers = this.canvas.state.get('layers');
+        
+        layers.forEach(layer => {
+            const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
+            for (let y = 0; y < newHeight; y++) {
+                for (let x = 0; x < newWidth; x++) {
+                    const srcX = Math.floor(x / scaleX);
+                    const srcY = Math.floor(y / scaleY);
+                    if (srcX >= 0 && srcX < oldWidth && srcY >= 0 && srcY < oldHeight) {
+                        const srcIdx = (srcY * oldWidth + srcX) * 4;
+                        const dstIdx = (y * newWidth + x) * 4;
+                        newPixels[dstIdx] = layer.pixels[srcIdx];
+                        newPixels[dstIdx+1] = layer.pixels[srcIdx+1];
+                        newPixels[dstIdx+2] = layer.pixels[srcIdx+2];
+                        newPixels[dstIdx+3] = layer.pixels[srcIdx+3];
+                    }
                 }
             }
-        }
+            layer.pixels = newPixels;
+            layer.dirty = true;
+            layer.scaledCanvas = null;
+            
+            // Re-create offscreen canvas if size changed
+            if (layer.offscreen && (layer.offscreen.width !== newWidth || layer.offscreen.height !== newHeight)) {
+                layer.offscreen = new OffscreenCanvas(newWidth, newHeight);
+                layer.offscreenCtx = layer.offscreen.getContext('2d');
+            }
+        });
 
-        layer.pixels = newPixels;
-        layer.dirty = true;
-        layer.scaledCanvas = null;
-        this.canvas.state.set('canvasWidth', newWidth);
-        this.canvas.state.set('canvasHeight', newHeight);
-        this.canvas.resizeCanvas(newWidth, newHeight);
+        // Update canvas and state dimensions
+        this.canvas.canvasWidth = newWidth;
+        this.canvas.canvasHeight = newHeight;
+        this.state.set('canvasWidth', newWidth);
+        this.state.set('canvasHeight', newHeight);
+        
+        this.canvas.applyZoomTransform();
+        this.canvas.centerCanvas();
+        this.canvas.updateCachedRect();
+        this.canvas.render();
+        
         this.history.endStroke();
     }
 
     rotateLayer(degrees) {
-        const layer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];
-        if (!layer) return;
-
         this.history.beginStroke();
 
-        const width = this.canvas.width;
-        const height = this.canvas.height;
+        const oldWidth = this.canvas.width;
+        const oldHeight = this.canvas.height;
         const rad = degrees * Math.PI / 180;
-        const cos = Math.cos(rad);
-        const sin = Math.sin(rad);
+        const cos = Math.abs(Math.round(Math.cos(rad)));
+        const sin = Math.abs(Math.round(Math.sin(rad)));
 
-        const newWidth = Math.round(Math.abs(width * cos) + Math.abs(height * sin));
-        const newHeight = Math.round(Math.abs(width * sin) + Math.abs(height * cos));
-        const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
+        // New dimensions (handles 90/180/270 correctly)
+        const newWidth = Math.round(oldWidth * cos + oldHeight * sin);
+        const newHeight = Math.round(oldWidth * sin + oldHeight * cos);
+        
+        const layers = this.canvas.state.get('layers');
+        
+        layers.forEach(layer => {
+            const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
+            const cx = oldWidth / 2;
+            const cy = oldHeight / 2;
+            const ncx = newWidth / 2;
+            const ncy = newHeight / 2;
 
-        const cx = width / 2;
-        const cy = height / 2;
-        const ncx = newWidth / 2;
-        const ncy = newHeight / 2;
+            const angle = degrees * Math.PI / 180;
+            const c = Math.cos(angle);
+            const s = Math.sin(angle);
 
-        for (let y = 0; y < newHeight; y++) {
-            for (let x = 0; x < newWidth; x++) {
-                const srcX = Math.round((x - ncx) * cos + (y - ncy) * sin + cx);
-                const srcY = Math.round((y - ncy) * cos - (x - ncx) * sin + cy);
-                if (srcX >= 0 && srcX < width && srcY >= 0 && srcY < height) {
-                    const srcIdx = (srcY * width + srcX) * 4;
+            for (let y = 0; y < newHeight; y++) {
+                for (let x = 0; x < newWidth; x++) {
+                    const srcX = Math.round((x - ncx) * c + (y - ncy) * s + cx);
+                    const srcY = Math.round((y - ncy) * c - (x - ncx) * s + cy);
+                    if (srcX >= 0 && srcX < oldWidth && srcY >= 0 && srcY < oldHeight) {
+                        const srcIdx = (srcY * oldWidth + srcX) * 4;
+                        const dstIdx = (y * newWidth + x) * 4;
+                        newPixels[dstIdx] = layer.pixels[srcIdx];
+                        newPixels[dstIdx+1] = layer.pixels[srcIdx+1];
+                        newPixels[dstIdx+2] = layer.pixels[srcIdx+2];
+                        newPixels[dstIdx+3] = layer.pixels[srcIdx+3];
+                    }
+                }
+            }
+            layer.pixels = newPixels;
+            layer.dirty = true;
+            layer.scaledCanvas = null;
+            
+            if (layer.offscreen && (layer.offscreen.width !== newWidth || layer.offscreen.height !== newHeight)) {
+                layer.offscreen = new OffscreenCanvas(newWidth, newHeight);
+                layer.offscreenCtx = layer.offscreen.getContext('2d');
+            }
+        });
+
+        this.canvas.canvasWidth = newWidth;
+        this.canvas.canvasHeight = newHeight;
+        this.state.set('canvasWidth', newWidth);
+        this.state.set('canvasHeight', newHeight);
+        
+        this.canvas.applyZoomTransform();
+        this.canvas.centerCanvas();
+        this.canvas.updateCachedRect();
+        this.canvas.render();
+        
+        this.history.endStroke();
+    }
+
+    cropLayer(x1, y1, x2, y2) {
+        this.history.beginStroke();
+
+        const oldWidth = this.canvas.width;
+        const minX = Math.max(0, Math.min(x1, x2));
+        const maxX = Math.min(oldWidth - 1, Math.max(x1, x2));
+        const minY = Math.max(0, Math.min(y1, y2));
+        const maxY = Math.min(this.canvas.height - 1, Math.max(y1, y2));
+        const newWidth = maxX - minX + 1;
+        const newHeight = maxY - minY + 1;
+        
+        const layers = this.canvas.state.get('layers');
+        
+        layers.forEach(layer => {
+            const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
+            for (let y = 0; y < newHeight; y++) {
+                for (let x = 0; x < newWidth; x++) {
+                    const srcIdx = ((y + minY) * oldWidth + (x + minX)) * 4;
                     const dstIdx = (y * newWidth + x) * 4;
                     newPixels[dstIdx] = layer.pixels[srcIdx];
                     newPixels[dstIdx+1] = layer.pixels[srcIdx+1];
@@ -283,48 +352,26 @@ export class TransformTool {
                     newPixels[dstIdx+3] = layer.pixels[srcIdx+3];
                 }
             }
-        }
-
-        layer.pixels = newPixels;
-        layer.dirty = true;
-        layer.scaledCanvas = null;
-        this.canvas.state.set('canvasWidth', newWidth);
-        this.canvas.state.set('canvasHeight', newHeight);
-        this.canvas.resizeCanvas(newWidth, newHeight);
-        this.history.endStroke();
-    }
-
-    cropLayer(x1, y1, x2, y2) {
-        const layer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];
-        if (!layer) return;
-
-        this.history.beginStroke();
-
-        const minX = Math.max(0, Math.min(x1, x2));
-        const maxX = Math.min(this.canvas.width - 1, Math.max(x1, x2));
-        const minY = Math.max(0, Math.min(y1, y2));
-        const maxY = Math.min(this.canvas.height - 1, Math.max(y1, y2));
-        const newWidth = maxX - minX + 1;
-        const newHeight = maxY - minY + 1;
-        const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
-
-        for (let y = 0; y < newHeight; y++) {
-            for (let x = 0; x < newWidth; x++) {
-                const srcIdx = ((y + minY) * this.canvas.width + (x + minX)) * 4;
-                const dstIdx = (y * newWidth + x) * 4;
-                newPixels[dstIdx] = layer.pixels[srcIdx];
-                newPixels[dstIdx+1] = layer.pixels[srcIdx+1];
-                newPixels[dstIdx+2] = layer.pixels[srcIdx+2];
-                newPixels[dstIdx+3] = layer.pixels[srcIdx+3];
+            layer.pixels = newPixels;
+            layer.dirty = true;
+            layer.scaledCanvas = null;
+            
+            if (layer.offscreen && (layer.offscreen.width !== newWidth || layer.offscreen.height !== newHeight)) {
+                layer.offscreen = new OffscreenCanvas(newWidth, newHeight);
+                layer.offscreenCtx = layer.offscreen.getContext('2d');
             }
-        }
+        });
 
-        layer.pixels = newPixels;
-        layer.dirty = true;
-        layer.scaledCanvas = null;
-        this.canvas.state.set('canvasWidth', newWidth);
-        this.canvas.state.set('canvasHeight', newHeight);
-        this.canvas.resizeCanvas(newWidth, newHeight);
+        this.canvas.canvasWidth = newWidth;
+        this.canvas.canvasHeight = newHeight;
+        this.state.set('canvasWidth', newWidth);
+        this.state.set('canvasHeight', newHeight);
+        
+        this.canvas.applyZoomTransform();
+        this.canvas.centerCanvas();
+        this.canvas.updateCachedRect();
+        this.canvas.render();
+        
         this.history.endStroke();
     }
 
