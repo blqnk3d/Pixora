@@ -139,6 +139,13 @@ class App {
             }
         });
 
+        canvasEl.addEventListener('mouseleave', () => {
+            if (this.currentTool && this.currentTool.previewPos) {
+                this.currentTool.previewPos = null;
+                this.canvas.render();
+            }
+        });
+
         document.addEventListener('wheel', (e) => {
             if (e.ctrlKey || e.metaKey) {
                 e.preventDefault();
@@ -157,7 +164,16 @@ class App {
                     this.statusBar.updatePosition(pos);
                     if (pos) {
                         this.currentTool.onMouseMove(pos, e);
+                        if (this.currentTool.updatePreview) {
+                            this.currentTool.previewPos = pos;
+                            this.canvas.render();
+                        }
                         if (this.currentTool.isDrawing || (this.currentTool.isSelecting && this.currentTool.selection)) {
+                            this.canvas.render();
+                        }
+                    } else {
+                        if (this.currentTool.previewPos) {
+                            this.currentTool.previewPos = null;
                             this.canvas.render();
                         }
                     }
