@@ -118,28 +118,34 @@ export class TransformTool {
             if (this.isMovingSelection && this.selectedPixelsData && this.selectionTool) {
                 layer.pixels = new Uint8ClampedArray(this.layerStartPixels);
 
+                // Clear ONLY the pixels that were actually selected (respecting the mask if it exists)
                 if (this.originalSelectionBounds) {
                     const { x1, y1, x2, y2 } = this.originalSelectionBounds;
                     for (let y = y1; y <= y2; y++) {
                         for (let x = x1; x <= x2; x++) {
                             if (x >= 0 && x < width && y >= 0 && y < height) {
-                                const idx = (y * width + x) * 4;
-                                layer.pixels[idx] = 0;
-                                layer.pixels[idx + 1] = 0;
-                                layer.pixels[idx + 2] = 0;
-                                layer.pixels[idx + 3] = 0;
+                                // If there's a mask, only clear pixels within the mask
+                                if (!this.originalMask || this.originalMask[y * width + x]) {
+                                    const idx = (y * width + x) * 4;
+                                    layer.pixels[idx] = 0;
+                                    layer.pixels[idx + 1] = 0;
+                                    layer.pixels[idx + 2] = 0;
+                                    layer.pixels[idx + 3] = 0;
+                                }
                             }
                         }
                     }
                 }
 
                 const { pixels: selPixels, x: selX, y: selY, width: selW, height: selH } = this.selectedPixelsData;
-                const newX = selX + dx;
-                const newY = selY + dy;
+                const newX = Math.round(selX + dx);
+                const newY = Math.round(selY + dy);
 
+                // Draw the moved pixels
                 for (let y = 0; y < selH; y++) {
                     for (let x = 0; x < selW; x++) {
                         const srcIdx = (y * selW + x) * 4;
+                        // Only draw if the pixel in the selection data is actually opaque
                         if (selPixels[srcIdx + 3] > 0) {
                             const destX = newX + x;
                             const destY = newY + y;
@@ -154,21 +160,22 @@ export class TransformTool {
                     }
                 }
 
+                // Update the selection tool's coordinates
                 this.selectionTool.selection.x1 = newX;
                 this.selectionTool.selection.x2 = newX + selW - 1;
                 this.selectionTool.selection.y1 = newY;
                 this.selectionTool.selection.y2 = newY + selH - 1;
 
-                if (this.selectionTool.selection.mask && this.originalMask && this.originalSelectionBounds) {
+                // If there's a mask (Magic Select), update its position too
+                if (this.selectionTool.selection.mask && this.originalMask) {
                     const newMask = new Uint8Array(width * height);
-                    const oBounds = this.originalSelectionBounds;
-                    for (let y = oBounds.y1; y <= oBounds.y2; y++) {
-                        for (let x = oBounds.x1; x <= oBounds.x2; x++) {
+                    for (let y = 0; y < height; y++) {
+                        for (let x = 0; x < width; x++) {
                             if (this.originalMask[y * width + x]) {
-                                const newMaskX = x + dx;
-                                const newMaskY = y + dy;
-                                if (newMaskX >= 0 && newMaskX < width && newMaskY >= 0 && newMaskY < height) {
-                                    newMask[newMaskY * width + newMaskX] = 1;
+                                const nmX = x + Math.round(dx);
+                                const nmY = y + Math.round(dy);
+                                if (nmX >= 0 && nmX < width && nmY >= 0 && nmY < height) {
+                                    newMask[nmY * width + nmX] = 1;
                                 }
                             }
                         }
