@@ -314,7 +314,7 @@ class App {
                     if (this.state.get('currentTool') === 'magicSelect') {
                         this.state.set('magicWandTolerance', Math.min(255, this.state.get('magicWandTolerance') + 5));
                     } else {
-                        this.state.set('brushSize', Math.min(7, this.state.get('brushSize') + 2));
+                        this.state.set('brushSize', Math.min(31, this.state.get('brushSize') + 2));
                     }
                     break;
                 case 'escape': 

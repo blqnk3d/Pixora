@@ -14,7 +14,7 @@ js/
 │   ├── canvas.js       # CanvasEngine: zoom, rendering, drawing dispatch
 │   └── history.js      # Undo/redo stacks (stores snapshots with canvasWidth/Height)
 ├── tools/              # One class per tool, keyed by name in App.tools
-│   ├── pencil.js       # Uses state.brushSize (1-8, odd numbers only)
+│   ├── pencil.js       # Uses state.brushSize (1-31, odd numbers only)
 │   ├── eraser.js       # Uses state.brushSize
 │   ├── magic-select.js # Uses state.magicWandTolerance (0-255)
 │   └── ...
@@ -23,7 +23,7 @@ js/
 ```
 
 ## State Conventions
-- **brushSize**: Must be odd (1, 3, 5, 7). Toolbar auto-corrects even inputs to odd.
+- **brushSize**: Must be odd (1, 3, 5, 7, ..., 31). Toolbar auto-corrects even inputs to odd.
 - **magicWandTolerance**: 0-255, stored in state (not on tool object). Changed via `[`/`]` when magic wand active.
 - **zoom**: `state.zoom` must stay in sync with `canvas.zoom`/`canvas.zoomIndex`. Canvas zoom levels: `[1,2,4,6,8,10,12,16,20,24,32,48,64]` (index 5 = 10x).
 - **recentColors**: Max 15 entries. Filter-then-unshift-then-slice pattern in `state.addRecentColor()`.

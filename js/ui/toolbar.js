@@ -21,7 +21,7 @@ export class Toolbar {
             <div style="flex:1"></div>
             <div class="brush-size-container" title="Brush Size (use [ and ] or scroll on tool)">
                 <label style="font-size:10px;color:var(--text-secondary);display:block;text-align:center">Size</label>
-                <input type="number" id="brush-size" min="1" max="8" value="${this.app.state.get('brushSize')}" style="width:40px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:2px;text-align:center;font-size:11px">
+                <input type="number" id="brush-size" min="1" max="31" value="${this.app.state.get('brushSize')}" style="width:40px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:2px;text-align:center;font-size:11px">
             </div>
             <div id="tolerance-container" style="display:none;padding:4px;text-align:center">
                 <label style="font-size:10px;color:var(--text-secondary);display:block;text-align:center">Tol</label>
@@ -43,7 +43,7 @@ export class Toolbar {
                 const currentTool = this.app.state.get('currentTool');
                 if (currentTool === 'pencil' || currentTool === 'eraser') {
                     const delta = e.deltaY > 0 ? -1 : 1;
-                    const newSize = Math.max(1, Math.min(8, this.app.state.get('brushSize') + delta));
+                    const newSize = Math.max(1, Math.min(31, this.app.state.get('brushSize') + delta));
                     this.app.state.set('brushSize', newSize);
                     document.getElementById('brush-size').value = newSize;
                 }
@@ -61,7 +61,7 @@ export class Toolbar {
             brushInput.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const delta = e.deltaY > 0 ? -2 : 2;
-                const newSize = Math.max(1, Math.min(8, this.app.state.get('brushSize') + delta));
+                const newSize = Math.max(1, Math.min(31, this.app.state.get('brushSize') + delta));
                 this.app.state.set('brushSize', newSize);
                 brushInput.value = newSize;
             });

@@ -4,6 +4,8 @@ export class CanvasEngine {
         this.ctx = this.element.getContext('2d');
         this.state = state;
         this.history = history;
+        this.canvasWidth = state.get('canvasWidth') || 32;
+        this.canvasHeight = state.get('canvasHeight') || 32;
         this.zoom = 1;
         this.minZoom = 0.1;
         this.maxZoom = 128;
@@ -44,11 +46,11 @@ export class CanvasEngine {
     getPixelPosition(e) {
         if (!this.cachedRect) this.updateCachedRect();
         const rect = this.cachedRect;
-        const scaleX = rect.width / this.width;
-        const scaleY = rect.height / this.height;
+        const scaleX = rect.width / this.canvasWidth;
+        const scaleY = rect.height / this.canvasHeight;
         const x = Math.floor((e.clientX - rect.left) / scaleX);
         const y = Math.floor((e.clientY - rect.top) / scaleY);
-        if (x < 0 || y < 0 || x >= this.width || y >= this.height) return null;
+        if (x < 0 || y < 0 || x >= this.canvasWidth || y >= this.canvasHeight) return null;
         return { x, y };
     }
 
@@ -69,8 +71,8 @@ export class CanvasEngine {
     }
 
     applyZoomTransform() {
-        this.element.style.width = this.width + 'px';
-        this.element.style.height = this.height + 'px';
+        this.element.style.width = this.canvasWidth + 'px';
+        this.element.style.height = this.canvasHeight + 'px';
         this.element.style.transform = `scale(${this.zoom})`;
         this.element.style.transformOrigin = 'center center';
     }
@@ -152,7 +154,7 @@ export class CanvasEngine {
     }
 
 renderNow() {
-        const { width, height } = this;
+        const { canvasWidth: width, canvasHeight: height } = this;
 
         if (this.element.width !== width || this.element.height !== height) {
             this.element.width = width;
@@ -277,7 +279,7 @@ renderNow() {
         const layer = this.state.get('layers')[layerIdx];
         if (!layer) return;
 
-        const idx = (y * this.width + x) * 4;
+        const idx = (y * this.canvasWidth + x) * 4;
         if (idx < 0 || idx >= layer.pixels.length) return;
 
         const oldColor = [layer.pixels[idx], layer.pixels[idx+1], layer.pixels[idx+2], layer.pixels[idx+3]];
@@ -298,19 +300,23 @@ renderNow() {
         const layer = this.state.get('layers')[layerIdx];
         if (!layer) return null;
 
-        const idx = (y * this.width + x) * 4;
+        const idx = (y * this.canvasWidth + x) * 4;
         if (idx < 0 || idx >= layer.pixels.length) return null;
 
         return [layer.pixels[idx], layer.pixels[idx+1], layer.pixels[idx+2], layer.pixels[idx+3]];
     }
 
     resizeCanvas(newWidth, newHeight) {
+        const oldWidth = this.canvasWidth;
+        const oldHeight = this.canvasHeight;
+        this.canvasWidth = newWidth;
+        this.canvasHeight = newHeight;
         const layers = this.state.get('layers');
         layers.forEach(layer => {
             const newPixels = new Uint8ClampedArray(newWidth * newHeight * 4);
-            for (let y = 0; y < Math.min(this.height, newHeight); y++) {
-                for (let x = 0; x < Math.min(this.width, newWidth); x++) {
-                    const oldIdx = (y * this.width + x) * 4;
+            for (let y = 0; y < Math.min(oldHeight, newHeight); y++) {
+                for (let x = 0; x < Math.min(oldWidth, newWidth); x++) {
+                    const oldIdx = (y * oldWidth + x) * 4;
                     const newIdx = (y * newWidth + x) * 4;
                     newPixels[newIdx] = layer.pixels[oldIdx];
                     newPixels[newIdx+1] = layer.pixels[oldIdx+1];
@@ -320,7 +326,10 @@ renderNow() {
             }
             layer.pixels = newPixels;
             layer.dirty = true;
-            layer.scaledCanvas = null;
+            if (layer.offscreen && (layer.offscreen.width !== newWidth || layer.offscreen.height !== newHeight)) {
+                layer.offscreen = new OffscreenCanvas(newWidth, newHeight);
+                layer.offscreenCtx = layer.offscreen.getContext('2d');
+            }
         });
         this.state.set('canvasWidth', newWidth);
         this.state.set('canvasHeight', newHeight);
