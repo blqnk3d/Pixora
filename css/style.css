@@ -90,6 +90,25 @@ body {
     align-items: center;
     padding: 8px 0;
     gap: 4px;
+    transition: width 0.2s, opacity 0.2s;
+    overflow: hidden;
+    opacity: 1;
+}
+
+#left-toolbar:hover {
+    opacity: 1;
+}
+
+#left-toolbar:not(:hover) {
+    width: 8px;
+}
+
+#left-toolbar .tool-btn {
+    display: none;
+}
+
+#left-toolbar:hover .tool-btn {
+    display: flex;
 }
 
 .tool-btn {
@@ -119,9 +138,7 @@ body {
 #canvas-container {
     flex: 1;
     overflow: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative;
     background: var(--bg-primary);
     background-image:
         linear-gradient(45deg, #c0c0c0 25%, transparent 25%),
@@ -133,6 +150,22 @@ body {
     background-color: #808080;
     scrollbar-width: none;
     -ms-overflow-style: none;
+}
+
+#canvas-container::-webkit-scrollbar {
+    display: none;
+}
+
+#pixel-canvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    cursor: crosshair;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 #canvas-container::-webkit-scrollbar {
@@ -155,8 +188,25 @@ body {
     flex-direction: column;
     overflow-y: auto;
     resize: horizontal;
-    min-width: 200px;
+    min-width: 4px;
     max-width: 400px;
+    transition: width 0.2s, opacity 0.2s;
+    opacity: 0;
+    padding: 0;
+}
+
+#right-panels:hover {
+    width: var(--panel-width);
+    opacity: 1;
+    padding: 8px;
+}
+
+#right-panels > * {
+    display: none;
+}
+
+#right-panels:hover > * {
+    display: block;
 }
 
 .panel {
