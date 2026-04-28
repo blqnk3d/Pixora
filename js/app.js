@@ -293,6 +293,9 @@ class App {
     }
 
     onKeyDown(e) {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
         if (e.ctrlKey || e.metaKey) {
             switch (e.key.toLowerCase()) {
                 case 's':
