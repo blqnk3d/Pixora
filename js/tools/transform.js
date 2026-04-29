@@ -211,8 +211,21 @@ export class TransformTool {
         if (this.isDragging) {
             this.isDragging = false;
             this.startPos = null;
-            if (this.isMovingSelection) {
-                this.selectedPixelsData = this.selectionTool?.getSelectedPixels();
+            
+            if (this.isMovingSelection && this.selectionTool) {
+                // Update the "original" state for the next potential drag interaction
+                // This ensures that clicking to drag again uses the new dropped position as the clearing source
+                this.originalSelectionBounds = {
+                    x1: this.selectionTool.selection.x1,
+                    y1: this.selectionTool.selection.y1,
+                    x2: this.selectionTool.selection.x2,
+                    y2: this.selectionTool.selection.y2
+                };
+                if (this.selectionTool.selection.mask) {
+                    this.originalMask = new Uint8Array(this.selectionTool.selection.mask);
+                }
+                // Note: We DO NOT recapture selectedPixelsData from the layer here.
+                // We keep the original floating pixels to avoid merging with background during consecutive moves.
             } else {
                 this.layerStartPixels = null;
             }
