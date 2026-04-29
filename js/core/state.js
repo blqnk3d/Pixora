@@ -9,6 +9,7 @@ export class State {
             showGrid: true,
             currentTool: 'pencil',
             brushSize: 1,
+            brushShape: 'square',
             magicWandTolerance: 32,
             currentColor: [0, 0, 0, 255],
             backgroundColor: [0, 0, 0, 0],

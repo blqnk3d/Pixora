@@ -456,6 +456,24 @@ body:not(.bars-visible) #right-panels:not(:hover) > * {
     filter: brightness(1.2);
 }
 
+.shape-btn {
+    border: 1px solid var(--border);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.shape-btn:hover {
+    filter: brightness(1.2);
+}
+
+.shape-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
 .hsl-picker {
     margin-bottom: 8px;
 }

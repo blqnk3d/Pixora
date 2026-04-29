@@ -38,14 +38,21 @@ export class EraserTool {
 
     erasePixel(pos) {
         const size = this.state.get('brushSize');
-        const offset = Math.floor(size / 2);
+        const shape = this.state.get('brushShape') || 'square';
+        const center = Math.floor(size / 2);
         const transparent = [0, 0, 0, 0];
 
         for (let dy = 0; dy < size; dy++) {
             for (let dx = 0; dx < size; dx++) {
-                const x = pos.x + dx - offset;
-                const y = pos.y + dy - offset;
+                const x = pos.x + dx - center;
+                const y = pos.y + dy - center;
                 if (x >= 0 && y >= 0 && x < this.canvas.width && y < this.canvas.height) {
+                    if (shape === 'circle') {
+                        const distX = dx - center;
+                        const distY = dy - center;
+                        const radius = center + 0.5;
+                        if (distX * distX + distY * distY > radius * radius) continue;
+                    }
                     if (!window.app.hasSelection() || window.app.isPointInSelection(x, y)) {
                         this.canvas.setPixel(x, y, transparent);
                     }

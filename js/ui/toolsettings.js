@@ -13,6 +13,7 @@ export class ToolSettings {
         let content = '<div class="panel-title">Tool Settings</div>';
 
         if (currentTool === 'pencil' || currentTool === 'eraser') {
+            const brushShape = this.app.state.get('brushShape') || 'square';
             content += `
                 <div class="setting-row">
                     <label style="font-size:11px;color:var(--text-secondary)">Brush Size</label>
@@ -20,6 +21,13 @@ export class ToolSettings {
                         <button class="size-btn" data-delta="-2" title="Decrease ( [ )">-</button>
                         <input type="number" id="brush-size" min="1" max="31" value="${brushSize}" style="width:48px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:2px;text-align:center;font-size:12px">
                         <button class="size-btn" data-delta="2" title="Increase ( ] )">+</button>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <label style="font-size:11px;color:var(--text-secondary)">Shape</label>
+                    <div style="display:flex;gap:4px">
+                        <button class="shape-btn${brushShape === 'square' ? ' active' : ''}" data-shape="square" title="Square" style="padding:2px 6px;font-size:11px">■</button>
+                        <button class="shape-btn${brushShape === 'circle' ? ' active' : ''}" data-shape="circle" title="Circle" style="padding:2px 6px;font-size:11px">●</button>
                     </div>
                 </div>
             `;
@@ -68,6 +76,14 @@ export class ToolSettings {
                 this.app.state.set('brushSize', newSize);
                 if (brushInput) brushInput.value = newSize;
                 this.updatePreview(newSize);
+            });
+        });
+
+        this.element.querySelectorAll('.shape-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const shape = btn.dataset.shape;
+                this.app.state.set('brushShape', shape);
+                this.render();
             });
         });
 
