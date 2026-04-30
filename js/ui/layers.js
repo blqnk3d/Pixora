@@ -220,10 +220,12 @@ export class LayersPanel {
     }
 
     addLayer() {
+        this.app.history.beginStroke();
         const layers = this.app.state.get('layers');
         layers.push(this.app.state.createLayer('Layer ' + (layers.length + 1)));
         this.app.state.set('layers', layers);
         this.app.state.set('activeLayer', layers.length - 1);
         this.render();
+        this.app.history.endStroke();
     }
 }

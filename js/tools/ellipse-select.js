@@ -23,10 +23,11 @@ export class EllipseSelectTool {
         this.selection = { x1: pos.x, y1: pos.y, x2: pos.x, y2: pos.y };
     }
 
-    onMouseMove(pos) {
-        if (!this.isSelecting || !pos) return;
-        this.selection.x2 = pos.x;
-        this.selection.y2 = pos.y;
+    onMouseMove(pos, e) {
+        if (!this.isSelecting) return;
+        const clampedPos = this.canvas.getClampedPixelPosition(e);
+        this.selection.x2 = clampedPos.x;
+        this.selection.y2 = clampedPos.y;
         this.canvas.render();
     }
 

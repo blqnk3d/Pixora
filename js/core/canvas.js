@@ -58,6 +58,20 @@ export class CanvasEngine {
         return { x, y };
     }
 
+    getClampedPixelPosition(e) {
+        if (!this.cachedRect) this.updateCachedRect();
+        const rect = this.cachedRect;
+        const scaleX = rect.width / this.canvasWidth;
+        const scaleY = rect.height / this.canvasHeight;
+        let x = Math.floor((e.clientX - rect.left) / scaleX);
+        let y = Math.floor((e.clientY - rect.top) / scaleY);
+        
+        x = Math.max(0, Math.min(this.canvasWidth - 1, x));
+        y = Math.max(0, Math.min(this.canvasHeight - 1, y));
+        
+        return { x, y };
+    }
+
     setZoom(newZoom, focalPoint = null) {
         const clampedZoom = Math.max(this.minZoom, Math.min(this.maxZoom, newZoom));
         if (Math.abs(this.zoom - clampedZoom) < 0.001) return;

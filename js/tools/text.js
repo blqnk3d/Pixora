@@ -73,6 +73,7 @@ export class TextTool {
             return;
         }
 
+        this.history.beginStroke();
         const width = this.canvas.width;
         const height = this.canvas.height;
         const layers = this.canvas.state.get('layers');
@@ -106,6 +107,7 @@ export class TextTool {
         
         window.app.layersPanel.render();
         this.canvas.render();
+        this.history.endStroke();
         this.cancelText();
     }
 

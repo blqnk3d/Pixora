@@ -74,6 +74,7 @@ export class MenuBar {
    }
 
   removeLayer() {
+    this.app.history.beginStroke();
     var layers = this.app.state.get("layers");
     var activeIdx = this.app.state.get("activeLayer");
     if (layers.length <= 1) return;
@@ -81,9 +82,11 @@ export class MenuBar {
     this.app.state.set("layers", layers);
     this.app.state.set("activeLayer", Math.min(activeIdx, layers.length - 1));
     this.app.layersPanel.render();
+    this.app.history.endStroke();
   }
 
   duplicateLayer() {
+    this.app.history.beginStroke();
     var layers = this.app.state.get("layers");
     var activeIdx = this.app.state.get("activeLayer");
     var original = layers[activeIdx];
@@ -97,9 +100,11 @@ export class MenuBar {
     this.app.state.set("layers", layers);
     this.app.state.set("activeLayer", layers.length - 1);
     this.app.layersPanel.render();
+    this.app.history.endStroke();
   }
 
   mergeDown() {
+    this.app.history.beginStroke();
     var layers = this.app.state.get("layers");
     var activeIdx = this.app.state.get("activeLayer");
     if (activeIdx >= layers.length - 1 || layers.length < 2) return;
@@ -120,6 +125,7 @@ export class MenuBar {
     this.app.state.set("activeLayer", activeIdx);
     this.app.layersPanel.render();
     this.app.canvas.render();
+    this.app.history.endStroke();
   }
 
   newFileDialog() {

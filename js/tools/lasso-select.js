@@ -23,11 +23,12 @@ export class LassoSelectTool {
         this.selection = null;
     }
 
-    onMouseMove(pos) {
-        if (!this.isSelecting || !pos) return;
+    onMouseMove(pos, e) {
+        if (!this.isSelecting) return;
+        const clampedPos = this.canvas.getClampedPixelPosition(e);
         const last = this.path[this.path.length - 1];
-        if (last.x !== pos.x || last.y !== pos.y) {
-            this.path.push(pos);
+        if (last.x !== clampedPos.x || last.y !== clampedPos.y) {
+            this.path.push(clampedPos);
             this.canvas.render();
         }
     }

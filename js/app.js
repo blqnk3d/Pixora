@@ -56,6 +56,15 @@ class App {
         this.exporter = new Exporter(this);
         this.importer = new Importer(this);
 
+        window.addEventListener('beforeunload', (e) => {
+            const layers = this.state.get('layers');
+            const hasContent = layers.some(l => l.pixels.some(p => p !== 0));
+            if (hasContent) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+
         this.init();
     }
 
@@ -216,13 +225,12 @@ class App {
                 if (this.currentTool && this.currentTool.onMouseMove) {
                     const pos = this.canvas.getPixelPosition(e);
                     this.statusBar.updatePosition(pos);
+                    
+                    this.currentTool.onMouseMove(pos, e);
+                    
                     if (pos) {
-                        this.currentTool.onMouseMove(pos, e);
                         if (this.currentTool.updatePreview) {
                             this.currentTool.previewPos = pos;
-                            this.canvas.render();
-                        }
-                        if (this.currentTool.isDrawing || (this.currentTool.isSelecting && this.currentTool.selection)) {
                             this.canvas.render();
                         }
                     } else {
@@ -231,6 +239,11 @@ class App {
                             this.canvas.render();
                         }
                     }
+
+                    if (this.currentTool.isDrawing || (this.currentTool.isSelecting && this.currentTool.selection) || (this.currentTool.isDragging)) {
+                        this.canvas.render();
+                    }
+
                     if (this.currentTool.updatePreview && !this.currentTool.isDrawing && !this.currentTool.isSelecting) {
                         this.currentTool.updatePreview(pos, e);
                     }
@@ -468,6 +481,7 @@ class App {
     pasteSelection() {
         if (!this.clipboard) return;
         
+        this.history.beginStroke();
         const clipboard = this.clipboard;
         const layers = this.state.get('layers');
         
@@ -506,6 +520,7 @@ class App {
         }
         layer.dirty = true;
         this.canvas.render();
+        this.history.endStroke();
     }
 
     deleteSelection() {
@@ -533,6 +548,7 @@ class App {
         const layer = this.state.get('layers')[layerIdx];
         if (!layer) return;
         
+        this.history.beginStroke();
         const canvasWidth = this.canvas.width;
         if ((tool === 'magicSelect' || tool === 'lassoSelect') && (this.tools.magicSelect?.selection?.mask || this.tools.lassoSelect?.selection?.mask)) {
             const mask = this.tools.magicSelect?.selection?.mask || this.tools.lassoSelect?.selection?.mask;
@@ -564,6 +580,7 @@ class App {
         layer.dirty = true;
         this.deselectAll();
         this.canvas.render();
+        this.history.endStroke();
     }
 
     getActiveSelection() {
@@ -609,6 +626,7 @@ class App {
     }
 
     handleExternalPaste(img) {
+        this.history.beginStroke();
         const layers = this.state.get('layers');
         const isDefault = layers.length === 1 && layers[0].pixels.every(p => p === 0);
         
@@ -641,6 +659,7 @@ class App {
         }
         this.layersPanel.render();
         this.canvas.render();
+        this.history.endStroke();
     }
 
     getSelectedPixels(x, y, w, h) {

@@ -28,18 +28,11 @@ export class TransformTool {
     }
 
     approveMove() {
-        if (this.pendingApproval && this.layerStartPixels) {
-            const layer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];
-            if (layer) {
-                layer.pixels = new Uint8ClampedArray(this.layerStartPixels);
-                layer.dirty = true;
-            }
-            this.history.endStroke();
-        }
         this.pendingApproval = false;
         this.layerStartPixels = null;
         this.selectedPixelsData = null;
         this.canvas.render();
+        this.history.endStroke();
     }
 
     cancelMove() {
@@ -62,6 +55,7 @@ export class TransformTool {
         this.layerStartPixels = null;
         this.selectedPixelsData = null;
         this.canvas.render();
+        this.history.endStroke();
     }
 
     onMouseDown(pos) {
@@ -104,11 +98,12 @@ export class TransformTool {
         this.history.beginStroke();
     }
 
-    onMouseMove(pos) {
-        if (!this.isDragging || !pos || !this.startPos) return;
+    onMouseMove(pos, e) {
+        if (!this.isDragging || !this.startPos) return;
 
-        const dx = pos.x - this.startPos.x;
-        const dy = pos.y - this.startPos.y;
+        const clampedPos = this.canvas.getClampedPixelPosition(e);
+        const dx = clampedPos.x - this.startPos.x;
+        const dy = clampedPos.y - this.startPos.y;
 
         if (Math.abs(dx) > 0 || Math.abs(dy) > 0) {
             const layer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];

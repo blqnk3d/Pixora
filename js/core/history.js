@@ -27,23 +27,27 @@ export class History {
 
         const layers = this.state.get('layers');
         const snapshot = this.strokeSnapshot.layers;
-        const diffs = [];
-        const hasChanges = layers.some((layer, i) => {
-            const snap = snapshot[i];
-            if (layer.name !== snap.name) return true;
-            if (layer.visible !== snap.visible) return true;
-            if (layer.opacity !== snap.opacity) return true;
+        
+        let hasChanges = layers.length !== snapshot.length;
+        
+        if (!hasChanges) {
+            hasChanges = layers.some((layer, i) => {
+                const snap = snapshot[i];
+                if (layer.name !== snap.name) return true;
+                if (layer.visible !== snap.visible) return true;
+                if (layer.opacity !== snap.opacity) return true;
 
-            for (let j = 0; j < layer.pixels.length; j += 4) {
-                if (layer.pixels[j] !== snap.pixels[j] ||
-                    layer.pixels[j+1] !== snap.pixels[j+1] ||
-                    layer.pixels[j+2] !== snap.pixels[j+2] ||
-                    layer.pixels[j+3] !== snap.pixels[j+3]) {
-                    return true;
+                for (let j = 0; j < layer.pixels.length; j += 4) {
+                    if (layer.pixels[j] !== snap.pixels[j] ||
+                        layer.pixels[j+1] !== snap.pixels[j+1] ||
+                        layer.pixels[j+2] !== snap.pixels[j+2] ||
+                        layer.pixels[j+3] !== snap.pixels[j+3]) {
+                        return true;
+                    }
                 }
-            }
-            return false;
-        });
+                return false;
+            });
+        }
 
         if (hasChanges) {
             this.undoStack.push(this.strokeSnapshot);
