@@ -19,6 +19,13 @@ import { TextTool } from './tools/text.js';
 import { MagicSelectTool } from './tools/magic-select.js';
 import { EllipseSelectTool } from './tools/ellipse-select.js';
 import { LassoSelectTool } from './tools/lasso-select.js';
+import { BlurTool } from './tools/blur.js';
+import { CloneTool } from './tools/clone.js';
+import { HealTool } from './tools/heal.js';
+import { SmudgeTool } from './tools/smudge.js';
+import { AdjustTool } from './tools/adjust.js';
+import { LineTool } from './tools/line.js';
+import { ShapeTool } from './tools/shape.js';
 
 class App {
     constructor() {
@@ -36,7 +43,15 @@ class App {
             text: new TextTool(this.canvas, this.state, this.history),
             magicSelect: new MagicSelectTool(this.canvas, this.state, this.history),
             ellipseSelect: new EllipseSelectTool(this.canvas, this.state, this.history),
-            lassoSelect: new LassoSelectTool(this.canvas, this.state, this.history)
+            lassoSelect: new LassoSelectTool(this.canvas, this.state, this.history),
+            blur: new BlurTool(this.canvas, this.state, this.history),
+            clone: new CloneTool(this.canvas, this.state, this.history),
+            heal: new HealTool(this.canvas, this.state, this.history),
+            smudge: new SmudgeTool(this.canvas, this.state, this.history),
+            adjust: new AdjustTool(this.canvas, this.state, this.history),
+            line: new LineTool(this.canvas, this.state, this.history),
+            rect: new ShapeTool(this.canvas, this.state, this.history, 'rect'),
+            circle: new ShapeTool(this.canvas, this.state, this.history, 'circle')
         };
 
         this.currentTool = this.tools.pencil;

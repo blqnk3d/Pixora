@@ -11,11 +11,25 @@ export class Toolbar {
             { name: 'magicSelect', icon: icons.magicSelect, title: 'Magic Select (W)', shortcut: 'W' }
         ];
         this.activeSelectionToolIndex = 0;
+
+        this.fxTools = [
+            { name: 'clone', icon: icons.clone, title: 'Clone (Ctrl+Click to set source)', shortcut: '' },
+            { name: 'heal', icon: icons.heal, title: 'Heal (Ctrl+Click to set source)', shortcut: '' },
+            { name: 'blur', icon: icons.blur, title: 'Blur', shortcut: '' },
+            { name: 'smudge', icon: icons.smudge, title: 'Smudge/Mix', shortcut: '' },
+            { name: 'adjust', icon: icons.adjust, title: 'Brightness/Contrast', shortcut: '' }
+        ];
+        this.activeFxToolIndex = 0;
+
         this.tools = [
             { name: 'pencil', icon: icons.pencil, title: 'Pencil (B)', shortcut: 'B' },
             { name: 'eraser', icon: icons.eraser, title: 'Eraser (E)', shortcut: 'E' },
             { name: 'picker', icon: icons.picker, title: 'Color Picker (I)', shortcut: 'I' },
             { name: 'fill', icon: icons.fill, title: 'Fill (G)', shortcut: 'G' },
+            { name: 'line', icon: icons.line, title: 'Line Tool', shortcut: '' },
+            { name: 'rect', icon: icons.rect, title: 'Rect Tool', shortcut: '' },
+            { name: 'circle', icon: icons.circle, title: 'Circle Tool', shortcut: '' },
+            { name: 'fxGroup', isGroup: true },
             { name: 'selectionGroup', isGroup: true },
             { name: 'move', icon: icons.move, title: 'Move (V)', shortcut: 'V' },
             { name: 'text', icon: icons.text, title: 'Text (T)', shortcut: 'T' }
@@ -26,8 +40,13 @@ export class Toolbar {
     render() {
         this.element.innerHTML = this.tools.map(t => {
             if (t.isGroup) {
-                const activeTool = this.selectionTools[this.activeSelectionToolIndex];
-                return `<button class="tool-btn" data-tool="${activeTool.name}" data-group="selection" title="${activeTool.title}">${activeTool.icon}<span class="tool-shortcut">${activeTool.shortcut}</span><div class="tool-group-indicator"></div></button>`;
+                if (t.name === 'selectionGroup') {
+                    const activeTool = this.selectionTools[this.activeSelectionToolIndex];
+                    return `<button class="tool-btn" data-tool="${activeTool.name}" data-group="selection" title="${activeTool.title}">${activeTool.icon}<span class="tool-shortcut">${activeTool.shortcut}</span><div class="tool-group-indicator"></div></button>`;
+                } else if (t.name === 'fxGroup') {
+                    const activeTool = this.fxTools[this.activeFxToolIndex];
+                    return `<button class="tool-btn" data-tool="${activeTool.name}" data-group="fx" title="${activeTool.title}">${activeTool.icon}<span class="tool-shortcut">${activeTool.shortcut}</span><div class="tool-group-indicator"></div></button>`;
+                }
             }
             return `<button class="tool-btn" data-tool="${t.name}" title="${t.title}">${t.icon}<span class="tool-shortcut">${t.shortcut}</span></button>`;
         }).join('') + `
@@ -46,14 +65,22 @@ export class Toolbar {
             btn.addEventListener('contextmenu', (e) => {
                 if (btn.dataset.group === 'selection') {
                     e.preventDefault();
-                    this.showSelectionGroupMenu(e, btn);
+                    this.showGroupMenu(e, this.selectionTools, this.activeSelectionToolIndex, (idx) => {
+                        this.activeSelectionToolIndex = idx;
+                    });
+                } else if (btn.dataset.group === 'fx') {
+                    e.preventDefault();
+                    this.showGroupMenu(e, this.fxTools, this.activeFxToolIndex, (idx) => {
+                        this.activeFxToolIndex = idx;
+                    });
                 }
             });
 
             btn.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const currentTool = this.app.state.get('currentTool');
-                if (currentTool === 'pencil' || currentTool === 'eraser') {
+                const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'adjust', 'line', 'rect', 'circle'];
+                if (brushTools.includes(currentTool)) {
                     const delta = e.deltaY > 0 ? -2 : 2;
                     const newSize = Math.max(1, Math.min(31, this.app.state.get('brushSize') + delta));
                     this.app.state.set('brushSize', newSize);
@@ -63,7 +90,7 @@ export class Toolbar {
         });
     }
 
-    showSelectionGroupMenu(e, anchor) {
+    showGroupMenu(e, tools, activeIndex, setIndex) {
         const menu = document.createElement('div');
         menu.className = 'tool-context-menu';
         menu.style.position = 'fixed';
@@ -71,12 +98,12 @@ export class Toolbar {
         menu.style.top = (e.clientY) + 'px';
         menu.style.zIndex = '3000';
         
-        this.selectionTools.forEach((tool, index) => {
+        tools.forEach((tool, index) => {
             const item = document.createElement('div');
-            item.className = 'tool-context-menu-item' + (index === this.activeSelectionToolIndex ? ' active' : '');
+            item.className = 'tool-context-menu-item' + (index === activeIndex ? ' active' : '');
             item.innerHTML = `${tool.icon} <span>${tool.title}</span>`;
             item.onclick = () => {
-                this.activeSelectionToolIndex = index;
+                setIndex(index);
                 this.render();
                 this.app.selectTool(tool.name);
                 menu.remove();
@@ -96,15 +123,23 @@ export class Toolbar {
     }
 
     updateActive(toolName) {
-        let foundInGroup = false;
+        let foundInSelection = false;
         this.selectionTools.forEach((t, i) => {
             if (t.name === toolName) {
                 this.activeSelectionToolIndex = i;
-                foundInGroup = true;
+                foundInSelection = true;
             }
         });
 
-        if (foundInGroup) {
+        let foundInFx = false;
+        this.fxTools.forEach((t, i) => {
+            if (t.name === toolName) {
+                this.activeFxToolIndex = i;
+                foundInFx = true;
+            }
+        });
+
+        if (foundInSelection || foundInFx) {
             this.render();
         }
 

@@ -111,6 +111,20 @@ export class LayersPanel {
                 this.app.state.set('layers', layers);
                 this.app.canvas.render();
             });
+
+            input.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -5 : 5;
+                let val = parseInt(input.value) + delta;
+                val = Math.max(0, Math.min(100, val));
+                input.value = val;
+                
+                const idx = parseInt(input.dataset.index);
+                const layers = this.app.state.get('layers');
+                layers[idx].opacity = val / 100;
+                this.app.state.set('layers', layers);
+                this.app.canvas.render();
+            });
         });
 
         document.addEventListener('click', () => this.hideContextMenu());

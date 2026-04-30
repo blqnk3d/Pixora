@@ -50,5 +50,40 @@ export const icons = {
         <path d="M11 19c2-2 3-5 3-7s-1-4-3-6"/>
         <path d="M18 5c2 1 3 3 3 5s-1 4-3 5"/>
         <path d="M14 12c0-2-1-4-3-6"/>
+    </svg>`,
+    blur: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>
+    </svg>`,
+    clone: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m21 11-8-8"/>
+        <path d="M21 3h-8"/>
+        <path d="M21 3v8"/>
+        <path d="m3 13 8 8"/>
+        <path d="M3 21h8"/>
+        <path d="M3 21v-8"/>
+    </svg>`,
+    heal: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="7" width="20" height="10" rx="2" ry="2"/>
+        <path d="m7 12h10"/>
+        <path d="m12 7v10"/>
+    </svg>`,
+    smudge: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3a9 9 0 0 0-9 9"/>
+        <path d="M19 12a7 7 0 0 0-7-7"/>
+        <path d="M15 12a3 3 0 0 0-3-3"/>
+        <path d="m12 12 9 9"/>
+    </svg>`,
+    adjust: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M12 2v20M2 12h20"/>
+    </svg>`,
+    line: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="2" y1="22" x2="22" y2="2"/>
+    </svg>`,
+    rect: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+    </svg>`,
+    circle: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="9"/>
     </svg>`
 };
