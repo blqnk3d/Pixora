@@ -519,8 +519,10 @@ class App {
             }
         }
         layer.dirty = true;
+        this.deselectAll();
         this.canvas.render();
         this.history.endStroke();
+        this.selectTool('move');
     }
 
     deleteSelection() {
@@ -658,8 +660,10 @@ class App {
             this.state.set('activeLayer', layers.length - 1);
         }
         this.layersPanel.render();
+        this.deselectAll();
         this.canvas.render();
         this.history.endStroke();
+        this.selectTool('move');
     }
 
     getSelectedPixels(x, y, w, h) {
