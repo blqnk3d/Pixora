@@ -49,7 +49,7 @@ export class TransformTool {
                 layer.pixels = new Uint8ClampedArray(this.layerStartPixels);
                 layer.dirty = true;
             }
-            if (this.isMovingSelection && this.selectionTool) {
+            if (this.isMovingSelection && this.selectionTool && this.selectionTool.selection) {
                 if (this.originalSelectionBounds) {
                     this.selectionTool.selection.x1 = this.originalSelectionBounds.x1;
                     this.selectionTool.selection.y1 = this.originalSelectionBounds.y1;
@@ -271,14 +271,11 @@ export class TransformTool {
         });
 
         // Update canvas and state dimensions
-        this.canvas.canvasWidth = newWidth;
-        this.canvas.canvasHeight = newHeight;
         this.state.set('canvasWidth', newWidth);
         this.state.set('canvasHeight', newHeight);
+        this.canvas.syncWithState();
         
-        this.canvas.applyZoomTransform();
         this.canvas.centerCanvas();
-        this.canvas.updateCachedRect();
         this.canvas.render();
         
         this.history.endStroke();
@@ -334,14 +331,11 @@ export class TransformTool {
             }
         });
 
-        this.canvas.canvasWidth = newWidth;
-        this.canvas.canvasHeight = newHeight;
         this.state.set('canvasWidth', newWidth);
         this.state.set('canvasHeight', newHeight);
+        this.canvas.syncWithState();
         
-        this.canvas.applyZoomTransform();
         this.canvas.centerCanvas();
-        this.canvas.updateCachedRect();
         this.canvas.render();
         
         this.history.endStroke();
@@ -382,14 +376,11 @@ export class TransformTool {
             }
         });
 
-        this.canvas.canvasWidth = newWidth;
-        this.canvas.canvasHeight = newHeight;
         this.state.set('canvasWidth', newWidth);
         this.state.set('canvasHeight', newHeight);
+        this.canvas.syncWithState();
         
-        this.canvas.applyZoomTransform();
         this.canvas.centerCanvas();
-        this.canvas.updateCachedRect();
         this.canvas.render();
         
         this.history.endStroke();

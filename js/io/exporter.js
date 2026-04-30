@@ -46,4 +46,28 @@ export class Exporter {
     saveGIF() {
         alert('GIF export requires additional library. Use PNG export for now.');
     }
+
+    removeBackground() {
+        const layerIdx = this.app.state.get('activeLayer');
+        const layer = this.app.state.get('layers')[layerIdx];
+        if (!layer) return;
+
+        const pixels = layer.pixels;
+        const r = pixels[0];
+        const g = pixels[1];
+        const b = pixels[2];
+        const a = pixels[3];
+
+        if (a === 0) return; // Already transparent at (0,0)
+
+        this.app.history.beginStroke();
+        for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i] === r && pixels[i+1] === g && pixels[i+2] === b && pixels[i+3] === a) {
+                pixels[i+3] = 0;
+            }
+        }
+        layer.dirty = true;
+        this.app.canvas.render();
+        this.app.history.endStroke();
+    }
 }

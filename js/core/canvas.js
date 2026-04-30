@@ -150,6 +150,13 @@ export class CanvasEngine {
         }
     }
 
+    syncWithState() {
+        this.canvasWidth = this.state.get('canvasWidth');
+        this.canvasHeight = this.state.get('canvasHeight');
+        this.applyZoomTransform();
+        this.updateCachedRect();
+    }
+
     render() {
         if (this.renderPending) return;
         this.renderPending = true;
@@ -249,6 +256,10 @@ renderNow() {
         const ellipseSelect = tools.ellipseSelect;
         if (ellipseSelect && ellipseSelect.selection) {
             ellipseSelect.drawSelection();
+        }
+        const lassoSelect = tools.lassoSelect;
+        if (lassoSelect && (lassoSelect.selection || lassoSelect.isSelecting)) {
+            lassoSelect.drawSelection();
         }
     }
 

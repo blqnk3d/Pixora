@@ -44,5 +44,11 @@ export const icons = {
         <polyline points="4 7 4 4 20 4 20 7"/>
         <line x1="9" y1="20" x2="15" y2="20"/>
         <line x1="12" y1="4" x2="12" y2="20"/>
+    </svg>`,
+    lassoSelect: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 22c-2 0-4-1-4-3 0-2 2-3 4-3 2 0 4 1 4 3 0 2-2 3-4 3Z"/>
+        <path d="M11 19c2-2 3-5 3-7s-1-4-3-6"/>
+        <path d="M18 5c2 1 3 3 3 5s-1 4-3 5"/>
+        <path d="M14 12c0-2-1-4-3-6"/>
     </svg>`
 };

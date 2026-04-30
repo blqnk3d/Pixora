@@ -73,22 +73,18 @@ export class TextTool {
             return;
         }
 
-        this.history.beginStroke();
-
-        const fontFamily = getComputedStyle(document.documentElement).getPropertyValue('--font-family').trim() || 'Arial';
         const width = this.canvas.width;
         const height = this.canvas.height;
-        const activeLayer = this.canvas.state.get('layers')[this.canvas.state.get('activeLayer')];
+        const layers = this.canvas.state.get('layers');
+        const newLayer = this.canvas.state.createLayer('Text Layer');
+        
+        const fontFamily = getComputedStyle(document.documentElement).getPropertyValue('--font-family').trim() || 'Arial';
 
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = width;
         tempCanvas.height = height;
         const ctx = tempCanvas.getContext('2d');
         ctx.imageSmoothingEnabled = false;
-
-        const imageData = ctx.createImageData(width, height);
-        imageData.data.set(activeLayer.pixels);
-        ctx.putImageData(imageData, 0, 0);
 
         ctx.font = `12px ${fontFamily}`;
         ctx.fillStyle = `rgb(${this.state.get('currentColor').slice(0,3).join(',')})`;
@@ -101,24 +97,15 @@ export class TextTool {
         });
 
         const textImageData = ctx.getImageData(0, 0, width, height);
-
-        for (let y = 0; y < height; y++) {
-            for (let x = 0; x < width; x++) {
-                const srcIdx = (y * width + x) * 4;
-                if (srcIdx < textImageData.data.length && textImageData.data[srcIdx + 3] > 0) {
-                    if (!window.app.hasSelection() || window.app.isPointInSelection(x, y)) {
-                        activeLayer.pixels[srcIdx] = textImageData.data[srcIdx];
-                        activeLayer.pixels[srcIdx + 1] = textImageData.data[srcIdx + 1];
-                        activeLayer.pixels[srcIdx + 2] = textImageData.data[srcIdx + 2];
-                        activeLayer.pixels[srcIdx + 3] = textImageData.data[srcIdx + 3];
-                    }
-                }
-            }
-        }
-
-        activeLayer.dirty = true;
+        newLayer.pixels.set(textImageData.data);
+        newLayer.dirty = true;
+        
+        layers.push(newLayer);
+        this.canvas.state.set('layers', layers);
+        this.canvas.state.set('activeLayer', layers.length - 1);
+        
+        window.app.layersPanel.render();
         this.canvas.render();
-        this.history.endStroke();
         this.cancelText();
     }
 

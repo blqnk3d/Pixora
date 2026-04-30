@@ -18,6 +18,7 @@ import { TransformTool } from './tools/transform.js';
 import { TextTool } from './tools/text.js';
 import { MagicSelectTool } from './tools/magic-select.js';
 import { EllipseSelectTool } from './tools/ellipse-select.js';
+import { LassoSelectTool } from './tools/lasso-select.js';
 
 class App {
     constructor() {
@@ -34,7 +35,8 @@ class App {
             move: new TransformTool(this.canvas, this.state, this.history),
             text: new TextTool(this.canvas, this.state, this.history),
             magicSelect: new MagicSelectTool(this.canvas, this.state, this.history),
-            ellipseSelect: new EllipseSelectTool(this.canvas, this.state, this.history)
+            ellipseSelect: new EllipseSelectTool(this.canvas, this.state, this.history),
+            lassoSelect: new LassoSelectTool(this.canvas, this.state, this.history)
         };
 
         this.currentTool = this.tools.pencil;
@@ -59,6 +61,7 @@ class App {
 
     init() {
         this.state.initCanvas(32, 32);
+        this.canvas.syncWithState();
         this.selectTool('pencil');
         this.bindEvents();
         this.canvas.render();
@@ -83,7 +86,7 @@ class App {
         if (this.currentTool && this.currentTool.deactivate) {
             this.currentTool.deactivate();
         }
-        const selectionTools = ['selector', 'magicSelect', 'ellipseSelect'];
+        const selectionTools = ['selector', 'magicSelect', 'ellipseSelect', 'lassoSelect'];
         if (selectionTools.includes(name)) {
             this.deselectAll();
         }
@@ -100,6 +103,7 @@ class App {
         if (this.tools.selector) this.tools.selector.selection = null;
         if (this.tools.magicSelect) this.tools.magicSelect.selection = null;
         if (this.tools.ellipseSelect) this.tools.ellipseSelect.selection = null;
+        if (this.tools.lassoSelect) this.tools.lassoSelect.selection = null;
         this.canvas.render();
     }
 
@@ -107,6 +111,7 @@ class App {
         const selector = this.tools.selector;
         const magicSelect = this.tools.magicSelect;
         const ellipseSelect = this.tools.ellipseSelect;
+        const lassoSelect = this.tools.lassoSelect;
 
         if (selector?.selection) {
             const { x1, y1, x2, y2 } = selector.selection;
@@ -133,11 +138,16 @@ class App {
             if (dx * dx + dy * dy <= 1) return true;
         }
 
+        if (lassoSelect?.selection) {
+            const { x1, y1, x2, y2, mask } = lassoSelect.selection;
+            if (x >= x1 && x <= x2 && y >= y1 && y <= y2 && mask?.[y * this.canvas.width + x]) return true;
+        }
+
         return false;
     }
 
     hasSelection() {
-        return !!(this.tools.selector?.selection || this.tools.magicSelect?.selection || this.tools.ellipseSelect?.selection);
+        return !!(this.tools.selector?.selection || this.tools.magicSelect?.selection || this.tools.ellipseSelect?.selection || this.tools.lassoSelect?.selection);
     }
 
     bindEvents() {
@@ -337,7 +347,7 @@ class App {
                     break;
                 case 'v':
                     e.preventDefault();
-                    this.pasteSelection();
+                    this.pasteFromClipboard();
                     break;
                 case '+':
                 case '=':
@@ -370,6 +380,7 @@ class App {
                 case 't': this.selectTool('text'); break;
                 case 'w': this.selectTool('magicSelect'); break;
                 case 'o': this.selectTool('ellipseSelect'); break;
+                case 'l': this.selectTool('lassoSelect'); break;
                 case '[':
                     if (this.state.get('currentTool') === 'magicSelect') {
                         this.state.set('magicWandTolerance', Math.max(0, this.state.get('magicWandTolerance') - 1));
@@ -413,32 +424,37 @@ class App {
     }
 
     copySelection() {
-        const sel = this.getActiveSelection();
-        if (!sel) return;
+        const toolName = this.getSelectionTool();
+        if (!toolName) return;
         
-        let pixels, x, y, width, height;
-        const tool = this.getSelectionTool();
+        const tool = this.tools[toolName];
+        const selData = tool.getSelectedPixels();
         
-        if (tool === 'selector' || tool === 'ellipseSelect') {
-            const { x1, y1, x2, y2 } = this.tools.selector?.selection || this.tools.ellipseSelect?.selection;
-            x = Math.min(x1, x2);
-            y = Math.min(y1, y2);
-            width = Math.abs(x2 - x1) + 1;
-            height = Math.abs(y2 - y1) + 1;
-            pixels = this.getSelectedPixels(x, y, width, height);
-        } else if (tool === 'magicSelect') {
-            const selData = this.tools.magicSelect.getSelectedPixels();
-            if (!selData) return;
-            x = selData.x;
-            y = selData.y;
-            width = selData.width;
-            height = selData.height;
-            pixels = selData.pixels;
+        if (selData) {
+            this.clipboard = { ...selData, time: Date.now() };
+            this.copyToSystemClipboard(selData.pixels, selData.width, selData.height);
         }
+    }
+
+    copyToSystemClipboard(pixels, width, height) {
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        const ctx = tempCanvas.getContext('2d');
+        const imageData = ctx.createImageData(width, height);
+        imageData.data.set(pixels);
+        ctx.putImageData(imageData, 0, 0);
         
-        if (pixels && width && height) {
-            this.clipboard = { pixels, x, y, width, height };
-        }
+        tempCanvas.toBlob(blob => {
+            try {
+                const item = new ClipboardItem({ [blob.type]: blob });
+                navigator.clipboard.write([item]).catch(err => {
+                    console.error('System clipboard write failed:', err);
+                });
+            } catch (e) {
+                console.error('ClipboardItem not supported or write failed:', e);
+            }
+        });
     }
 
     cutSelection() {
@@ -452,7 +468,16 @@ class App {
     pasteSelection() {
         if (!this.clipboard) return;
         
-        var layers = this.state.get('layers');
+        const clipboard = this.clipboard;
+        const layers = this.state.get('layers');
+        
+        // Resize canvas if clipboard content extends beyond current bounds
+        const newWidth = Math.max(this.canvas.width, clipboard.x + clipboard.width);
+        const newHeight = Math.max(this.canvas.height, clipboard.y + clipboard.height);
+        if (newWidth > this.canvas.width || newHeight > this.canvas.height) {
+            this.canvas.resizeCanvas(newWidth, newHeight);
+        }
+
         var newName = 'Pasted ' + (layers.length + 1);
         layers.push(this.state.createLayer(newName));
         var targetIdx = layers.length - 1;
@@ -461,7 +486,6 @@ class App {
         this.layersPanel.render();
         
         var layer = layers[targetIdx];
-        var clipboard = this.clipboard;
         var canvasWidth = this.canvas.width;
         
         for (var py = 0; py < clipboard.height; py++) {
@@ -497,8 +521,8 @@ class App {
             minY = Math.min(s.y1, s.y2);
             maxX = Math.max(s.x1, s.x2);
             maxY = Math.max(s.y1, s.y2);
-        } else if (tool === 'magicSelect') {
-            const s = this.tools.magicSelect.selection;
+        } else if (tool === 'magicSelect' || tool === 'lassoSelect') {
+            const s = this.tools.magicSelect?.selection || this.tools.lassoSelect?.selection;
             minX = s.x1;
             minY = s.y1;
             maxX = s.x2;
@@ -510,8 +534,8 @@ class App {
         if (!layer) return;
         
         const canvasWidth = this.canvas.width;
-        if (tool === 'magicSelect' && this.tools.magicSelect.selection?.mask) {
-            const { mask } = this.tools.magicSelect.selection;
+        if ((tool === 'magicSelect' || tool === 'lassoSelect') && (this.tools.magicSelect?.selection?.mask || this.tools.lassoSelect?.selection?.mask)) {
+            const mask = this.tools.magicSelect?.selection?.mask || this.tools.lassoSelect?.selection?.mask;
             for (let py = minY; py <= maxY; py++) {
                 for (let px = minX; px <= maxX; px++) {
                     if (mask[py * canvasWidth + px]) {
@@ -546,6 +570,7 @@ class App {
         if (this.tools.selector?.selection) return this.tools.selector.selection;
         if (this.tools.magicSelect?.selection) return this.tools.magicSelect.selection;
         if (this.tools.ellipseSelect?.selection) return this.tools.ellipseSelect.selection;
+        if (this.tools.lassoSelect?.selection) return this.tools.lassoSelect.selection;
         return null;
     }
 
@@ -553,7 +578,69 @@ class App {
         if (this.tools.selector?.selection) return 'selector';
         if (this.tools.magicSelect?.selection) return 'magicSelect';
         if (this.tools.ellipseSelect?.selection) return 'ellipseSelect';
+        if (this.tools.lassoSelect?.selection) return 'lassoSelect';
         return null;
+    }
+
+    pasteFromClipboard() {
+        const now = Date.now();
+        // If internal clipboard is very fresh (copied in the last 2 seconds), prefer it.
+        // This avoids pasting stale system clipboard images when we just copied something inside.
+        if (this.clipboard && (now - this.clipboard.time < 2000)) {
+            this.pasteSelection();
+            return;
+        }
+
+        navigator.clipboard.read().then(items => {
+            for (const item of items) {
+                if (item.types.includes('image/png') || item.types.includes('image/jpeg')) {
+                    item.getType(item.types.find(t => t.startsWith('image/'))).then(blob => {
+                        const img = new Image();
+                        img.onload = () => this.handleExternalPaste(img);
+                        img.src = URL.createObjectURL(blob);
+                    });
+                    return;
+                }
+            }
+            this.pasteSelection();
+        }).catch(() => {
+            this.pasteSelection();
+        });
+    }
+
+    handleExternalPaste(img) {
+        const layers = this.state.get('layers');
+        const isDefault = layers.length === 1 && layers[0].pixels.every(p => p === 0);
+        
+        if (isDefault) {
+            this.state.initCanvas(img.width, img.height);
+            this.canvas.syncWithState();
+            const layer = this.state.get('layers')[0];
+            const ctx = layer.offscreenCtx;
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            layer.pixels.set(imageData.data);
+            layer.dirty = true;
+        } else {
+            // Resize canvas if image is bigger
+            const newWidth = Math.max(this.canvas.width, img.width);
+            const newHeight = Math.max(this.canvas.height, img.height);
+            if (newWidth > this.canvas.width || newHeight > this.canvas.height) {
+                this.canvas.resizeCanvas(newWidth, newHeight);
+            }
+
+            const newLayer = this.state.createLayer('Pasted Image');
+            const ctx = newLayer.offscreenCtx;
+            ctx.drawImage(img, 0, 0);
+            const imageData = ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            newLayer.pixels.set(imageData.data);
+            newLayer.dirty = true;
+            layers.push(newLayer);
+            this.state.set('layers', layers);
+            this.state.set('activeLayer', layers.length - 1);
+        }
+        this.layersPanel.render();
+        this.canvas.render();
     }
 
     getSelectedPixels(x, y, w, h) {
