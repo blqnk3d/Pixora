@@ -14,7 +14,7 @@ export class ToolSettings {
 
         let content = '<div class="panel-title">Tool Settings</div>';
 
-        const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge'];
+        const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'line', 'rect', 'circle', 'adjust'];
 
         if (brushTools.includes(currentTool)) {
             const brushShape = this.app.state.get('brushShape') || 'square';

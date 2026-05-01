@@ -171,6 +171,13 @@ export class CanvasEngine {
         this.updateCachedRect();
     }
 
+    getOverlayScale() {
+        return {
+            x: this.overlay.width / this.canvasWidth,
+            y: this.overlay.height / this.canvasHeight
+        };
+    }
+
     render() {
         if (this.renderPending) return;
         this.renderPending = true;

@@ -273,7 +273,8 @@ class App {
                 canvasEl.style.cursor = this.isSpacePressed ? 'grab' : 'crosshair';
             } else {
                 if (this.currentTool && this.currentTool.onMouseUp) {
-                    this.currentTool.onMouseUp(e);
+                    const pos = this.canvas.getClampedPixelPosition(e);
+                    this.currentTool.onMouseUp(pos, e);
                     this.canvas.render();
                 }
                 if (e.button === 2 && this.previousToolBeforeEraser) {
@@ -409,6 +410,16 @@ class App {
                 case 'w': this.selectTool('magicSelect'); break;
                 case 'o': this.selectTool('ellipseSelect'); break;
                 case 'l': this.selectTool('lassoSelect'); break;
+                case 'u': 
+                    const shapeTools = ['line', 'rect', 'circle'];
+                    const currentTool = this.state.get('currentTool');
+                    if (shapeTools.includes(currentTool)) {
+                        const nextIdx = (shapeTools.indexOf(currentTool) + 1) % shapeTools.length;
+                        this.selectTool(shapeTools[nextIdx]);
+                    } else {
+                        this.selectTool('line');
+                    }
+                    break;
                 case '[':
                     if (this.state.get('currentTool') === 'magicSelect') {
                         this.state.set('magicWandTolerance', Math.max(0, this.state.get('magicWandTolerance') - 1));

@@ -21,14 +21,19 @@ export class Toolbar {
         ];
         this.activeFxToolIndex = 0;
 
+        this.shapeTools = [
+            { name: 'line', icon: icons.line, title: 'Line Tool', shortcut: '' },
+            { name: 'rect', icon: icons.rect, title: 'Rect Tool', shortcut: '' },
+            { name: 'circle', icon: icons.circle, title: 'Circle Tool', shortcut: '' }
+        ];
+        this.activeShapeToolIndex = 0;
+
         this.tools = [
             { name: 'pencil', icon: icons.pencil, title: 'Pencil (B)', shortcut: 'B' },
             { name: 'eraser', icon: icons.eraser, title: 'Eraser (E)', shortcut: 'E' },
             { name: 'picker', icon: icons.picker, title: 'Color Picker (I)', shortcut: 'I' },
             { name: 'fill', icon: icons.fill, title: 'Fill (G)', shortcut: 'G' },
-            { name: 'line', icon: icons.line, title: 'Line Tool', shortcut: '' },
-            { name: 'rect', icon: icons.rect, title: 'Rect Tool', shortcut: '' },
-            { name: 'circle', icon: icons.circle, title: 'Circle Tool', shortcut: '' },
+            { name: 'shapeGroup', isGroup: true },
             { name: 'fxGroup', isGroup: true },
             { name: 'selectionGroup', isGroup: true },
             { name: 'move', icon: icons.move, title: 'Move (V)', shortcut: 'V' },
@@ -46,6 +51,9 @@ export class Toolbar {
                 } else if (t.name === 'fxGroup') {
                     const activeTool = this.fxTools[this.activeFxToolIndex];
                     return `<button class="tool-btn" data-tool="${activeTool.name}" data-group="fx" title="${activeTool.title}">${activeTool.icon}<span class="tool-shortcut">${activeTool.shortcut}</span><div class="tool-group-indicator"></div></button>`;
+                } else if (t.name === 'shapeGroup') {
+                    const activeTool = this.shapeTools[this.activeShapeToolIndex];
+                    return `<button class="tool-btn" data-tool="${activeTool.name}" data-group="shape" title="${activeTool.title}">${activeTool.icon}<span class="tool-shortcut">${activeTool.shortcut}</span><div class="tool-group-indicator"></div></button>`;
                 }
             }
             return `<button class="tool-btn" data-tool="${t.name}" title="${t.title}">${t.icon}<span class="tool-shortcut">${t.shortcut}</span></button>`;
@@ -72,6 +80,11 @@ export class Toolbar {
                     e.preventDefault();
                     this.showGroupMenu(e, this.fxTools, this.activeFxToolIndex, (idx) => {
                         this.activeFxToolIndex = idx;
+                    });
+                } else if (btn.dataset.group === 'shape') {
+                    e.preventDefault();
+                    this.showGroupMenu(e, this.shapeTools, this.activeShapeToolIndex, (idx) => {
+                        this.activeShapeToolIndex = idx;
                     });
                 }
             });
@@ -139,7 +152,15 @@ export class Toolbar {
             }
         });
 
-        if (foundInSelection || foundInFx) {
+        let foundInShape = false;
+        this.shapeTools.forEach((t, i) => {
+            if (t.name === toolName) {
+                this.activeShapeToolIndex = i;
+                foundInShape = true;
+            }
+        });
+
+        if (foundInSelection || foundInFx || foundInShape) {
             this.render();
         }
 

@@ -15,13 +15,20 @@ export class AdjustTool {
     }
 
     onMouseDown(pos) {
+        this.isDrawing = true;
         this.history.beginStroke();
         this.adjustArea(pos);
     }
 
     onMouseMove(pos) {
-        if (!this.isDrawing) return;
+        this.previewPos = pos;
+        if (!this.isDrawing || !pos) return;
         this.adjustArea(pos);
+    }
+
+    onMouseUp() {
+        this.isDrawing = false;
+        this.history.endStroke();
     }
 
     adjustArea(pos) {
