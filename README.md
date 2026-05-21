@@ -1,5 +1,7 @@
 # Pixora - Pixel Art Editor
 
+https://blqnk3d.github.io/Pixora/
+
 A lightweight, browser-based pixel art editor built with vanilla JavaScript and Canvas API. No dependencies, fully static - perfect for GitHub Pages.
 
 ## Features
