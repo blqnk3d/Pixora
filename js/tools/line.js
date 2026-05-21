@@ -36,13 +36,40 @@ export class LineTool {
         if (!from || !to) return;
         const ctx = this.canvas.overlayCtx;
         const scale = this.canvas.getOverlayScale();
+        const brushSize = this.state.get('brushSize');
 
         ctx.beginPath();
         ctx.moveTo(from.x * scale.x + scale.x / 2, from.y * scale.y + scale.y / 2);
         ctx.lineTo(to.x * scale.x + scale.x / 2, to.y * scale.y + scale.y / 2);
         ctx.strokeStyle = `rgb(${this.state.get('currentColor').slice(0,3).join(',')})`;
-        ctx.lineWidth = this.state.get('brushSize') * scale.x;
+        ctx.lineWidth = brushSize * scale.x;
+        ctx.lineCap = this.state.get('brushShape') === 'circle' ? 'round' : 'square';
         ctx.stroke();
+    }
+
+    drawBrushPixel(pos) {
+        const color = this.state.get('currentColor');
+        const size = this.state.get('brushSize');
+        const shape = this.state.get('brushShape') || 'square';
+        const center = Math.floor(size / 2);
+
+        for (let dy = 0; dy < size; dy++) {
+            for (let dx = 0; dx < size; dx++) {
+                const x = pos.x + dx - center;
+                const y = pos.y + dy - center;
+                if (x >= 0 && y >= 0 && x < this.canvas.width && y < this.canvas.height) {
+                    if (shape === 'circle') {
+                        const distX = dx - center;
+                        const distY = dy - center;
+                        const radius = center + 0.5;
+                        if (distX * distX + distY * distY > radius * radius) continue;
+                    }
+                    if (!window.app.hasSelection() || window.app.isPointInSelection(x, y)) {
+                        this.canvas.setPixel(x, y, color);
+                    }
+                }
+            }
+        }
     }
 
     drawLine(from, to) {
@@ -61,7 +88,7 @@ export class LineTool {
 
         while (true) {
             if (!isNaN(x) && !isNaN(y)) {
-                this.canvas.setPixel(x, y, this.state.get('currentColor'));
+                this.drawBrushPixel({ x, y });
             }
             if (x === to.x && y === to.y) break;
             let e2 = 2 * err;
