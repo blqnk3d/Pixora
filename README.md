@@ -60,6 +60,3 @@ A lightweight, browser-based pixel art editor built with vanilla JavaScript and 
 
 Open `index.html` in any modern browser. No build step, no dependencies.
 
-## License
-
-MIT
