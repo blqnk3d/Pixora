@@ -33,6 +33,9 @@ export class SelectorTool {
 
     onMouseUp() {
         this.isSelecting = false;
+        if (this.selection && (this.selection.x1 !== this.selection.x2 || this.selection.y1 !== this.selection.y2)) {
+            window.app.selectTool('move');
+        }
     }
 
     selectAll() {
@@ -42,6 +45,7 @@ export class SelectorTool {
             y2: this.canvas.height - 1
         };
         this.canvas.render();
+        window.app.selectTool('move');
     }
 
     drawSelection() {

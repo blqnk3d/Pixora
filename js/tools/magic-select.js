@@ -29,6 +29,9 @@ export class MagicSelectTool {
 
         this.selection = this.getMagicSelection(layer, pos, targetColor, this.state.get('magicWandTolerance'));
         this.canvas.render();
+        if (this.selection) {
+            window.app.selectTool('move');
+        }
     }
 
     onMouseMove(pos) {}
