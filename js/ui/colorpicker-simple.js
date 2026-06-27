@@ -69,6 +69,28 @@ export class ColorPanel {
                 ctx.fillRect(x, y, 1, 1);
             }
         }
+        this.colorCanvasImage = ctx.getImageData(0, 0, w, h);
+        if (this.colorCanvasIndicator) {
+            this.drawColorCanvasIndicator(this.colorCanvasIndicator.x, this.colorCanvasIndicator.y);
+        }
+    }
+
+    drawColorCanvasIndicator(cx, cy) {
+        const canvas = document.getElementById('color-picker-canvas');
+        if (!canvas || !this.colorCanvasImage) return;
+        const ctx = canvas.getContext('2d');
+        ctx.putImageData(this.colorCanvasImage, 0, 0);
+        this.colorCanvasIndicator = { x: cx, y: cy };
+
+        const pixel = ctx.getImageData(cx, cy, 1, 1).data;
+        const lum = 0.299 * pixel[0] + 0.587 * pixel[1] + 0.114 * pixel[2];
+        const strokeColor = lum > 128 ? '#000' : '#fff';
+
+        ctx.beginPath();
+        ctx.arc(cx + 0.5, cy + 0.5, 5, 0, 2 * Math.PI);
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
     }
 
     hslToRgb(h, s, l) {
@@ -109,17 +131,39 @@ export class ColorPanel {
 
         const colorCanvas = document.getElementById('color-picker-canvas');
         if (colorCanvas) {
-            colorCanvas.addEventListener('click', (e) => {
+            let picking = false;
+            const pickFromCanvas = (e) => {
                 const rect = colorCanvas.getBoundingClientRect();
                 const x = Math.round((e.clientX - rect.left) / rect.width * colorCanvas.width);
                 const y = Math.round((e.clientY - rect.top) / rect.height * colorCanvas.height);
                 const ctx = colorCanvas.getContext('2d');
                 const pixel = ctx.getImageData(x, y, 1, 1).data;
-                const color = [pixel[0], pixel[1], pixel[2], this.app.state.get('currentColor')[3]];
+                return [pixel[0], pixel[1], pixel[2], this.app.state.get('currentColor')[3]];
+            };
+            colorCanvas.addEventListener('mousedown', (e) => {
+                picking = true;
+                const color = pickFromCanvas(e);
                 this.app.state.set('currentColor', color);
                 this.app.state.addRecentColor(color);
                 this.updatePreview();
+                const rect = colorCanvas.getBoundingClientRect();
+                const cx = Math.round((e.clientX - rect.left) / rect.width * colorCanvas.width);
+                const cy = Math.round((e.clientY - rect.top) / rect.height * colorCanvas.height);
+                this.drawColorCanvasIndicator(cx, cy);
             });
+            colorCanvas.addEventListener('mousemove', (e) => {
+                const rect = colorCanvas.getBoundingClientRect();
+                const cx = Math.round((e.clientX - rect.left) / rect.width * colorCanvas.width);
+                const cy = Math.round((e.clientY - rect.top) / rect.height * colorCanvas.height);
+                if (!picking) return;
+                const color = pickFromCanvas(e);
+                this.app.state.set('currentColor', color);
+                this.app.state.addRecentColor(color);
+                this.updatePreview();
+                this.drawColorCanvasIndicator(cx, cy);
+            });
+            colorCanvas.addEventListener('mouseup', () => { picking = false; });
+            colorCanvas.addEventListener('mouseleave', () => { picking = false; });
         }
 
         document.querySelectorAll('.palette-color').forEach(el => {
