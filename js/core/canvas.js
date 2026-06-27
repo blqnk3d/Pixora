@@ -353,10 +353,12 @@ renderNow() {
         for (const layer of this.state.get('layers')) {
             if (!layer.visible) continue;
             const idx = (cy * this.canvasWidth + cx) * 4;
-            r += layer.pixels[idx];
-            g += layer.pixels[idx + 1];
-            b += layer.pixels[idx + 2];
-            count++;
+            if (layer.pixels[idx + 3] > 0) {
+                r += layer.pixels[idx];
+                g += layer.pixels[idx + 1];
+                b += layer.pixels[idx + 2];
+                count++;
+            }
         }
         if (count === 0) return '#000';
         const lum = (0.299 * r + 0.587 * g + 0.114 * b) / count;
