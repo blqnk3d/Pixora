@@ -162,7 +162,7 @@ export class ColorPanel {
                 this.updatePreview();
                 this.drawColorCanvasIndicator(cx, cy);
             });
-            colorCanvas.addEventListener('mouseup', () => { picking = false; });
+            colorCanvas.addEventListener('mouseup', () => { picking = false; this.app.selectTool('pencil'); });
             colorCanvas.addEventListener('mouseleave', () => { picking = false; });
         }
 
