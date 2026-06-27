@@ -2,6 +2,7 @@ export class Importer {
     constructor(app) {
         this.app = app;
         this.fileInput = null;
+        this.pixoraInput = null;
     }
 
     openFile() {
@@ -9,12 +10,64 @@ export class Importer {
             this.fileInput = document.createElement('input');
             this.fileInput.type = 'file';
             this.fileInput.accept = 'image/png,image/jpeg,image/gif';
-            this.fileInput.onchange = (e) => this.loadFile(e.target.files[0]);
+            this.fileInput.onchange = (e) => this.loadImageFile(e.target.files[0]);
         }
+        this.fileInput.value = '';
         this.fileInput.click();
     }
 
-    loadFile(file) {
+    openPixora() {
+        if (!this.pixoraInput) {
+            this.pixoraInput = document.createElement('input');
+            this.pixoraInput.type = 'file';
+            this.pixoraInput.accept = '.pixora';
+            this.pixoraInput.onchange = (e) => this.loadPixoraFile(e.target.files[0]);
+        }
+        this.pixoraInput.value = '';
+        this.pixoraInput.click();
+    }
+
+    loadPixoraFile(file) {
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (data.format !== 'pixora') {
+                    alert('Invalid .pixora file');
+                    return;
+                }
+
+                this.app.history.beginStroke();
+
+                const { canvasWidth, canvasHeight, layers } = data;
+                this.app.state.initCanvas(canvasWidth, canvasHeight);
+                this.app.canvas.canvasWidth = canvasWidth;
+                this.app.canvas.canvasHeight = canvasHeight;
+
+                const newLayers = layers.map(l => {
+                    const layer = this.app.state.createLayer(l.name);
+                    layer.pixels = new Uint8ClampedArray(l.pixels);
+                    layer.visible = l.visible;
+                    layer.opacity = l.opacity;
+                    layer.dirty = true;
+                    return layer;
+                });
+
+                this.app.state.set('layers', newLayers);
+                this.app.state.set('activeLayer', 0);
+                this.app.canvas.render();
+                this.app.layersPanel.render();
+                this.app.history.endStroke();
+            } catch (err) {
+                alert('Failed to load file: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    loadImageFile(file) {
         if (!file) return;
 
         const reader = new FileReader();

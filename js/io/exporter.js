@@ -3,6 +3,90 @@ export class Exporter {
         this.app = app;
     }
 
+    showSavePopup() {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal">
+                <div class="modal-title">Export / Save</div>
+                <div style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+                    <button class="btn" id="save-pixora" style="text-align:left;padding:12px 16px">
+                        <div style="font-weight:600">Save Project (.pixora)</div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">Custom format with layers, editable later</div>
+                    </button>
+                    <button class="btn" id="save-png" style="text-align:left;padding:12px 16px">
+                        <div style="font-weight:600">Export PNG</div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">Flat image, all layers merged</div>
+                    </button>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn" id="cancel-save">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#cancel-save').onclick = () => overlay.remove();
+        overlay.querySelector('#save-pixora').onclick = () => { this.savePixora(); overlay.remove(); };
+        overlay.querySelector('#save-png').onclick = () => { this.savePNG(); overlay.remove(); };
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    }
+
+    showLoadPopup() {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.innerHTML = `
+            <div class="modal">
+                <div class="modal-title">Open File</div>
+                <div style="display:flex;flex-direction:column;gap:12px;padding:8px 0">
+                    <button class="btn" id="load-pixora" style="text-align:left;padding:12px 16px">
+                        <div style="font-weight:600">Open Project (.pixora)</div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">Load a saved project with all layers</div>
+                    </button>
+                    <button class="btn" id="load-image" style="text-align:left;padding:12px 16px">
+                        <div style="font-weight:600">Open Image</div>
+                        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px">Import PNG, JPEG, or GIF</div>
+                    </button>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn" id="cancel-load">Cancel</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+        overlay.querySelector('#cancel-load').onclick = () => overlay.remove();
+        overlay.querySelector('#load-pixora').onclick = () => { this.app.importer.openPixora(); overlay.remove(); };
+        overlay.querySelector('#load-image').onclick = () => { this.app.importer.openFile(); overlay.remove(); };
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+    }
+
+    savePixora() {
+        const canvasWidth = this.app.canvas.width;
+        const canvasHeight = this.app.canvas.height;
+        const layers = this.app.state.get('layers');
+
+        const data = {
+            version: 1,
+            format: 'pixora',
+            canvasWidth,
+            canvasHeight,
+            layers: layers.map(layer => ({
+                name: layer.name,
+                pixels: Array.from(layer.pixels),
+                visible: layer.visible,
+                opacity: layer.opacity
+            }))
+        };
+
+        const json = JSON.stringify(data);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'pixora-project.pixora';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
     savePNG() {
         var width = this.app.canvas.width;
         var height = this.app.canvas.height;
@@ -58,7 +142,7 @@ export class Exporter {
         const b = pixels[2];
         const a = pixels[3];
 
-        if (a === 0) return; // Already transparent at (0,0)
+        if (a === 0) return;
 
         this.app.history.beginStroke();
         for (let i = 0; i < pixels.length; i += 4) {

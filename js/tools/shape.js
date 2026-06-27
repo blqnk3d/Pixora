@@ -36,7 +36,10 @@ export class ShapeTool {
     drawPreview(from, to) {
         if (!from || !to) return;
         const ctx = this.canvas.overlayCtx;
-        ctx.strokeStyle = `rgb(${this.state.get('currentColor').slice(0,3).join(',')})`;
+        const c = this.state.get('currentColor').slice(0,3);
+        const lum = 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2];
+        ctx.strokeStyle = lum > 128 ? '#000' : '#fff';
+        ctx.setLineDash([4, 4]);
         const brushSize = this.state.get('brushSize');
         
         const scale = this.canvas.getOverlayScale();
@@ -54,6 +57,7 @@ export class ShapeTool {
             ctx.ellipse(x + w/2, y + h/2, (w-1)/2, (h-1)/2, 0, 0, 2 * Math.PI);
             ctx.stroke();
         }
+        ctx.setLineDash([]);
     }
 
     drawBrushPixel(pos) {

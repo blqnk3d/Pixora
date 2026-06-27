@@ -18,6 +18,7 @@ export class State {
             currentColor: [0, 0, 0, 255],
             backgroundColor: [0, 0, 0, 0],
             activeLayer: 0,
+            selectedLayers: [],
             layers: [],
             palette: [
                 [0,0,0,255], [255,255,255,255], [255,0,0,255], [0,255,0,255],
@@ -43,6 +44,7 @@ export class State {
         this.state.canvasHeight = height;
         this.state.layers = [this.createLayer('Layer 1')];
         this.state.activeLayer = 0;
+        this.state.selectedLayers = [];
     }
 
     createLayer(name) {

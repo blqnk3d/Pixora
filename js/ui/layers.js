@@ -7,9 +7,63 @@ export class LayersPanel {
         this.render();
     }
 
+    getSelectedLayers() {
+        return this.app.state.get('selectedLayers');
+    }
+
+    toggleSelected(idx) {
+        const selected = [...this.getSelectedLayers()];
+        const pos = selected.indexOf(idx);
+        if (pos >= 0) {
+            selected.splice(pos, 1);
+        } else {
+            selected.push(idx);
+        }
+        this.app.state.set('selectedLayers', selected);
+    }
+
+    selectRange(from, to) {
+        const layers = this.app.state.get('layers');
+        const start = Math.min(from, to);
+        const end = Math.max(from, to);
+        const selected = [];
+        for (let i = start; i <= end; i++) {
+            selected.push(i);
+        }
+        this.app.state.set('selectedLayers', selected);
+    }
+
+    selectAll() {
+        const layers = this.app.state.get('layers');
+        const selected = layers.map((_, i) => i);
+        this.app.state.set('selectedLayers', selected);
+    }
+
+    deleteSelectedLayers() {
+        const layers = this.app.state.get('layers');
+        const selected = this.getSelectedLayers();
+        if (selected.length === 0) return;
+        if (layers.length - selected.length < 1) return;
+
+        this.app.history.beginStroke();
+        const activeIdx = this.app.state.get('activeLayer');
+        const sortedDesc = [...selected].sort((a, b) => b - a);
+        sortedDesc.forEach(idx => {
+            layers.splice(idx, 1);
+        });
+        const newActive = Math.min(activeIdx, layers.length - 1);
+        this.app.state.set('activeLayer', newActive >= 0 ? newActive : 0);
+        this.app.state.set('selectedLayers', []);
+        this.app.state.set('layers', layers);
+        this.app.canvas.render();
+        this.render();
+        this.app.history.endStroke();
+    }
+
     render() {
         const layers = this.app.state.get('layers');
         const activeIdx = this.app.state.get('activeLayer');
+        const selectedLayers = this.getSelectedLayers();
 
         this.element.innerHTML = `
             <div class="panel-title" style="display:flex;justify-content:space-between;align-items:center">
@@ -17,15 +71,21 @@ export class LayersPanel {
                 <button class="btn btn-small" id="add-layer-btn" title="Add Layer (Ctrl+Shift+N)">+</button>
             </div>
             <div id="layers-list">
-                ${layers.map((layer, i) => `
-                    <div class="layer-item ${i === activeIdx ? 'active' : ''}" data-index="${i}" draggable="true">
+                ${layers.map((layer, i) => {
+                    const isActive = i === activeIdx;
+                    const isSelected = selectedLayers.includes(i);
+                    const classes = ['layer-item'];
+                    if (isActive) classes.push('active');
+                    if (isSelected) classes.push('selected');
+                    return `
+                    <div class="${classes.join(' ')}" data-index="${i}" draggable="true">
                         <span class="layer-visibility" data-index="${i}" data-action="toggle-visibility">
                             ${layer.visible ? 'V' : 'X'}
                         </span>
                         <span class="layer-name">${layer.name}</span>
                         <input type="number" class="layer-opacity" data-index="${i}" value="${Math.round(layer.opacity * 100)}" min="0" max="100" step="5">
-                    </div>
-                `).reverse().join('')}
+                    </div>`;
+                }).reverse().join('')}
             </div>
             <div style="padding:6px;font-size:11px;color:var(--text-secondary)">
                 ${layers.length} layer(s)
@@ -45,7 +105,18 @@ export class LayersPanel {
             item.addEventListener('click', (e) => {
                 if (e.target.dataset.action) return;
                 const idx = parseInt(item.dataset.index);
-                this.app.state.set('activeLayer', idx);
+                if (e.ctrlKey || e.metaKey) {
+                    this.toggleSelected(idx);
+                    this.app.state.set('activeLayer', idx);
+                } else if (e.shiftKey) {
+                    const selected = this.getSelectedLayers();
+                    const last = selected.length > 0 ? selected[selected.length - 1] : this.app.state.get('activeLayer');
+                    this.selectRange(last, idx);
+                    this.app.state.set('activeLayer', idx);
+                } else {
+                    this.app.state.set('activeLayer', idx);
+                    this.app.state.set('selectedLayers', [idx]);
+                }
                 this.render();
                 this.app.canvas.render();
             });

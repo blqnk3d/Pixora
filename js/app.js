@@ -339,11 +339,11 @@ class App {
             switch (e.key.toLowerCase()) {
                 case 's':
                     e.preventDefault();
-                    this.exporter.savePNG();
+                    this.exporter.showSavePopup();
                     break;
                 case 'o':
                     e.preventDefault();
-                    this.importer.openFile();
+                    this.exporter.showLoadPopup();
                     break;
                 case 'n':
                     e.preventDefault();
@@ -450,12 +450,18 @@ class App {
                     break;
                 case 'delete':
                     e.preventDefault();
-                    this.deleteSelection();
+                    if (this.hasSelection()) {
+                        this.deleteSelection();
+                    } else if (this.layersPanel.getSelectedLayers().length > 0) {
+                        this.layersPanel.deleteSelectedLayers();
+                    }
                     break;
                 case 'enter':
                     e.preventDefault();
                     if (this.tools.move?.approveMove) {
                         this.tools.move.approveMove();
+                    } else if (this.layersPanel.getSelectedLayers().length > 0) {
+                        this.layersPanel.deleteSelectedLayers();
                     }
                     break;
             }

@@ -296,7 +296,7 @@ renderNow() {
         const prevX = pos.x - offset;
         const prevY = pos.y - offset;
 
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        this.ctx.strokeStyle = this.getContrastColor(prevX, prevY, size);
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(prevX + 0.5, prevY + 0.5, size - 1, size - 1);
     }
@@ -321,7 +321,7 @@ renderNow() {
 
         this.lastPreviewPos = { x: pos.x, y: pos.y, size };
 
-        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.strokeStyle = this.getContrastColor(pos.x - offset, pos.y - offset, size);
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(pos.x - offset + 0.5, pos.y - offset + 0.5, size - 1, size - 1);
     }
@@ -340,9 +340,27 @@ renderNow() {
 
         this.lastPreviewPos = { x, y, size };
 
-        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.strokeStyle = this.getContrastColor(x - offset, y - offset, size);
         this.ctx.lineWidth = 1;
         this.ctx.strokeRect(x - offset + 0.5, y - offset + 0.5, size - 1, size - 1);
+    }
+
+    getContrastColor(x, y, size) {
+        const offset = Math.floor(size / 2);
+        const cx = Math.min(Math.max(x + offset, 0), this.canvasWidth - 1);
+        const cy = Math.min(Math.max(y + offset, 0), this.canvasHeight - 1);
+        let r = 0, g = 0, b = 0, count = 0;
+        for (const layer of this.state.get('layers')) {
+            if (!layer.visible) continue;
+            const idx = (cy * this.canvasWidth + cx) * 4;
+            r += layer.pixels[idx];
+            g += layer.pixels[idx + 1];
+            b += layer.pixels[idx + 2];
+            count++;
+        }
+        if (count === 0) return '#000';
+        const lum = (0.299 * r + 0.587 * g + 0.114 * b) / count;
+        return lum > 128 ? '#000' : '#fff';
     }
 
     setPixel(x, y, color, layerIndex = null) {
