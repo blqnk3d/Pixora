@@ -362,9 +362,8 @@ class App {
                     break;
                 case 'a':
                     e.preventDefault();
-                    if (this.currentTool === this.tools.selector) {
-                        this.tools.selector.selectAll();
-                    }
+                    this.deselectAll();
+                    this.tools.selector.selectAll();
                     break;
                 case 'c':
                     e.preventDefault();
