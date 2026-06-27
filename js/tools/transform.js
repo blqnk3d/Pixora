@@ -69,10 +69,11 @@ export class TransformTool {
         const selector = window.app?.tools?.selector;
         const magicSelect = window.app?.tools?.magicSelect;
         const ellipseSelect = window.app?.tools?.ellipseSelect;
+        const lassoSelect = window.app?.tools?.lassoSelect;
 
-        if (selector?.selection || magicSelect?.selection || ellipseSelect?.selection) {
+        if (selector?.selection || magicSelect?.selection || ellipseSelect?.selection || lassoSelect?.selection) {
             this.isMovingSelection = true;
-            this.selectionTool = selector?.selection ? selector : magicSelect?.selection ? magicSelect : ellipseSelect;
+            this.selectionTool = selector?.selection ? selector : magicSelect?.selection ? magicSelect : ellipseSelect?.selection ? ellipseSelect : lassoSelect;
             this.selectedPixelsData = this.selectionTool.getSelectedPixels();
             this.layerStartPixels = new Uint8ClampedArray(layer.pixels);
 

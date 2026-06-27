@@ -46,7 +46,7 @@ export class LassoSelectTool {
         this.path = [];
         this.canvas.render();
         if (this.selection) {
-            window.app.selectTool('move');
+            setTimeout(() => window.app.selectTool('move'), 0);
         }
     }
 

@@ -34,7 +34,7 @@ export class EllipseSelectTool {
     onMouseUp() {
         this.isSelecting = false;
         if (this.selection && (this.selection.x1 !== this.selection.x2 || this.selection.y1 !== this.selection.y2)) {
-            window.app.selectTool('move');
+            setTimeout(() => window.app.selectTool('move'), 0);
         }
     }
 
