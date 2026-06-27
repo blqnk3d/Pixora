@@ -14,7 +14,7 @@ export class ToolSettings {
 
         let content = '<div class="panel-title">Tool Settings</div>';
 
-        const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'line', 'rect', 'circle', 'adjust', 'brighten'];
+        const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'line', 'rect', 'circle', 'brighten'];
 
         if (brushTools.includes(currentTool)) {
             const brushShape = this.app.state.get('brushShape') || 'square';
@@ -52,15 +52,6 @@ export class ToolSettings {
                         <div style="display:flex;align-items:center;gap:4px">
                             <input type="number" id="smudge-intensity" class="scrollable-setting" data-setting="smudgeIntensity" data-min="0" data-max="100" data-step="5" value="${smudgeIntensity}" style="width:60px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:2px;text-align:center;font-size:12px">
                         </div>
-                    </div>
-                `;
-            } else if (currentTool === 'adjust') {
-                content += `
-                    <div class="setting-row">
-                        <label style="font-size:11px;color:var(--text-secondary)">Brightness</label>
-                        <input type="number" class="scrollable-setting" data-setting="brightness" data-min="-100" data-max="100" data-step="5" value="${this.app.state.get('brightness')}" style="width:60px">
-                        <label style="font-size:11px;color:var(--text-secondary)">Contrast</label>
-                        <input type="number" class="scrollable-setting" data-setting="contrast" data-min="0" data-max="200" data-step="5" value="${this.app.state.get('contrast')}" style="width:60px">
                     </div>
                 `;
             } else if (currentTool === 'brighten') {

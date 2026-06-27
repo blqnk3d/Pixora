@@ -24,7 +24,6 @@ import { BlurTool } from './tools/blur.js';
 import { CloneTool } from './tools/clone.js';
 import { HealTool } from './tools/heal.js';
 import { SmudgeTool } from './tools/smudge.js';
-import { AdjustTool } from './tools/adjust.js';
 import { LineTool } from './tools/line.js';
 import { ShapeTool } from './tools/shape.js';
 
@@ -49,7 +48,6 @@ class App {
             clone: new CloneTool(this.canvas, this.state, this.history),
             heal: new HealTool(this.canvas, this.state, this.history),
             smudge: new SmudgeTool(this.canvas, this.state, this.history),
-            adjust: new AdjustTool(this.canvas, this.state, this.history),
             brighten: new BrightenTool(this.canvas, this.state, this.history),
             line: new LineTool(this.canvas, this.state, this.history),
             rect: new ShapeTool(this.canvas, this.state, this.history, 'rect'),
