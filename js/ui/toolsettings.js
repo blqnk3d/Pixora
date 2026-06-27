@@ -14,7 +14,7 @@ export class ToolSettings {
 
         let content = '<div class="panel-title">Tool Settings</div>';
 
-        const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'line', 'rect', 'circle', 'adjust'];
+        const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'line', 'rect', 'circle', 'adjust', 'brighten'];
 
         if (brushTools.includes(currentTool)) {
             const brushShape = this.app.state.get('brushShape') || 'square';
@@ -61,6 +61,19 @@ export class ToolSettings {
                         <input type="number" class="scrollable-setting" data-setting="brightness" data-min="-100" data-max="100" data-step="5" value="${this.app.state.get('brightness')}" style="width:60px">
                         <label style="font-size:11px;color:var(--text-secondary)">Contrast</label>
                         <input type="number" class="scrollable-setting" data-setting="contrast" data-min="0" data-max="200" data-step="5" value="${this.app.state.get('contrast')}" style="width:60px">
+                    </div>
+                `;
+            } else if (currentTool === 'brighten') {
+                const brightenIntensity = this.app.state.get('brightenIntensity') || 10;
+                content += `
+                    <div class="setting-row">
+                        <label style="font-size:11px;color:var(--text-secondary)">Intensity</label>
+                        <div style="display:flex;align-items:center;gap:4px">
+                            <input type="number" id="brighten-intensity" class="scrollable-setting" data-setting="brightenIntensity" data-min="1" data-max="100" data-step="5" value="${brightenIntensity}" style="width:60px;background:var(--bg-tertiary);border:1px solid var(--border);color:var(--text-primary);padding:2px;text-align:center;font-size:12px">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <span style="font-size:10px;color:var(--text-secondary)">Hold Shift to darken</span>
                     </div>
                 `;
             } else if (currentTool === 'clone' || currentTool === 'heal') {

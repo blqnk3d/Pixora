@@ -17,7 +17,8 @@ export class Toolbar {
             { name: 'heal', icon: icons.heal, title: 'Heal (Ctrl+Click to set source)', shortcut: '' },
             { name: 'blur', icon: icons.blur, title: 'Blur', shortcut: '' },
             { name: 'smudge', icon: icons.smudge, title: 'Smudge/Mix', shortcut: '' },
-            { name: 'adjust', icon: icons.adjust, title: 'Brightness/Contrast', shortcut: '' }
+            { name: 'adjust', icon: icons.adjust, title: 'Brightness/Contrast', shortcut: '' },
+            { name: 'brighten', icon: icons.brighten, title: 'Brighten/Darken Brush (Shift = Darken)', shortcut: '' }
         ];
         this.activeFxToolIndex = 0;
 
@@ -92,7 +93,7 @@ export class Toolbar {
             btn.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 const currentTool = this.app.state.get('currentTool');
-                const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'adjust', 'line', 'rect', 'circle'];
+                const brushTools = ['pencil', 'eraser', 'blur', 'clone', 'heal', 'smudge', 'adjust', 'brighten', 'line', 'rect', 'circle'];
                 if (brushTools.includes(currentTool)) {
                     const delta = e.deltaY > 0 ? -2 : 2;
                     const newSize = Math.max(1, Math.min(31, this.app.state.get('brushSize') + delta));

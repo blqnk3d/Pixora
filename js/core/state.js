@@ -13,6 +13,7 @@ export class State {
             magicWandTolerance: 32,
             blurIntensity: 50,
             smudgeIntensity: 50,
+            brightenIntensity: 10,
             brightness: 0,
             contrast: 100,
             currentColor: [0, 0, 0, 255],

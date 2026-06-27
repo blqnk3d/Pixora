@@ -15,6 +15,7 @@ const LOCAL_ASSETS = [
   '/Pixora/js/io/exporter.js',
   '/Pixora/js/io/importer.js',
   '/Pixora/js/tools/adjust.js',
+  '/Pixora/js/tools/brighten.js',
   '/Pixora/js/tools/blur.js',
   '/Pixora/js/tools/clone.js',
   '/Pixora/js/tools/color-picker.js',

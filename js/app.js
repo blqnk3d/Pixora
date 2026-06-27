@@ -10,6 +10,7 @@ import { StatusBar } from './ui/statusbar.js';
 import { Exporter } from './io/exporter.js';
 import { Importer } from './io/importer.js';
 import { PencilTool } from './tools/pencil.js';
+import { BrightenTool } from './tools/brighten.js';
 import { EraserTool } from './tools/eraser.js';
 import { ColorPickerTool } from './tools/color-picker.js';
 import { FillTool } from './tools/fill.js';
@@ -49,6 +50,7 @@ class App {
             heal: new HealTool(this.canvas, this.state, this.history),
             smudge: new SmudgeTool(this.canvas, this.state, this.history),
             adjust: new AdjustTool(this.canvas, this.state, this.history),
+            brighten: new BrightenTool(this.canvas, this.state, this.history),
             line: new LineTool(this.canvas, this.state, this.history),
             rect: new ShapeTool(this.canvas, this.state, this.history, 'rect'),
             circle: new ShapeTool(this.canvas, this.state, this.history, 'circle')
