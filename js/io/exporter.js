@@ -31,6 +31,32 @@ export class Exporter {
         overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     }
 
+    async saveWithPicker(blob, defaultName, ext) {
+        if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: defaultName + '.' + ext,
+                    types: [{
+                        description: ext.toUpperCase() + ' file',
+                        accept: { [blob.type]: ['.' + ext] }
+                    }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                return;
+            } catch (e) {
+                if (e.name === 'AbortError') return;
+            }
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = defaultName + '.' + ext;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
     showLoadPopup() {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -79,12 +105,7 @@ export class Exporter {
 
         const json = JSON.stringify(data);
         const blob = new Blob([json], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'pixora-project.pixora';
-        a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        this.saveWithPicker(blob, 'pixel-art', 'pixora');
     }
 
     savePNG() {
@@ -117,13 +138,8 @@ export class Exporter {
         
         ctx.globalAlpha = 1;
         
-        exportCanvas.toBlob(function(blob) {
-            var url = URL.createObjectURL(blob);
-            var a = document.createElement('a');
-            a.href = url;
-            a.download = 'pixel-art.png';
-            a.click();
-            setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        exportCanvas.toBlob((blob) => {
+            this.saveWithPicker(blob, 'pixel-art', 'png');
         }, 'image/png');
     }
 
