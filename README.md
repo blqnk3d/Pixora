@@ -6,18 +6,27 @@ A lightweight, browser-based pixel art editor built with vanilla JavaScript and 
 
 ## Features
 
+### Multi-Document Tabs
+- Open multiple images simultaneously with tabbed interface
+- Create new documents (`Ctrl+N`), close tabs (`Ctrl+W`)
+- Drag & drop images directly from your file manager to open in a new tab
+- Each document keeps its own undo history, selection state, layers, zoom, and scroll position
+
 ### Drawing Tools
 - **Pencil (B)** - Draw with configurable brush size (1-8px), change with [ ] or scroll wheel on tool
 - **Eraser (E)** - Erase pixels with same brush size
 - **Fill/Bucket (G)** - Flood fill connected areas
+- **Brighten/Darken** - Brush-based brightness adjustment, Shift to darken
 - **Selector (M)** - Select rectangular regions, cut/copy/paste
 - **Magic Select (W)** - Select contiguous areas by color with tolerance control
 - **Ellipse Select (O)** - Create elliptical selection areas
-- **Move (V)** - Move layers, scale (50%/200%), rotate (90°/180°), crop to selection
+- **Lasso Select (L)** - Freehand selection tool
+- **Move (V)** - Move selections, scale (50%/200%), rotate (90°/180°), crop to selection
 - **Text (T)** - Add text to layers, editable after placement
 
 ### Layer System
 - Multiple layer support with drag & drop reordering
+- Multi-select layers (Ctrl+Click, Shift+Click)
 - Layer visibility toggle, opacity control, naming
 - Merge down, duplicate, delete layers
 - Transform: move, scale, rotate, crop to selection
@@ -32,7 +41,9 @@ A lightweight, browser-based pixel art editor built with vanilla JavaScript and 
 ### File Operations
 - New file with custom dimensions
 - Open images (PNG, JPG, GIF) - drag & drop supported
+- Custom .pixora project format (preserves layers)
 - Save/Export as PNG with transparency
+- Native file save picker (Chromium) with `<a download>` fallback
 - Background removal tool
 
 ### View & Navigation
@@ -41,22 +52,23 @@ A lightweight, browser-based pixel art editor built with vanilla JavaScript and 
 - Toggle pixel grid
 - Dark/light theme
 - Retro font toggle (Press Start 2P) - saved in localStorage
+- Auto-hide side panels
 
 ### Keyboard Shortcuts
-- `B` - Pencil | `E` - Eraser | `G` - Fill | `M` - Select | `W` - Magic Select | `O` - Ellipse Select | `V` - Move
-- `Ctrl+S` - Save PNG | `Ctrl+O` - Open | `Ctrl+N` - New
-- `Ctrl+Z` - Undo | `Ctrl+Y` - Redo | `Ctrl+A` - Select All
+- `B` - Pencil | `E` - Eraser | `I` - Eyedropper | `G` - Fill | `M` - Select | `W` - Magic Select | `O` - Ellipse Select | `L` - Lasso Select | `V` - Move | `T` - Text
+- `Ctrl+S` - Save | `Ctrl+O` - Open | `Ctrl+N` - New Tab | `Ctrl+W` - Close Tab
+- `Ctrl+Z` - Undo | `Ctrl+Y` / `Ctrl+Shift+Z` - Redo | `Ctrl+A` - Select All
+- `Ctrl+C` - Copy | `Ctrl+X` - Cut | `Ctrl+V` - Paste
 - `Ctrl+Scroll` - Zoom | `Middle Click Drag` - Pan
 - `[` / `]` - Decrease/Increase brush size
 - `Escape` - Deselect all selections
+- `Delete` - Delete selection or selected layers
+- `Enter` - Confirm move / delete selected layers
 
-## Upcoming Features
-- Text tool (add/edit text fields on layers)
-- Resizable UI panels
-- Brush size scroll wheel on toolbar hover
-- Enhanced layer drag & drop
+### PWA Support
+- Installable as a standalone app (manifest.json)
+- Offline support via service worker
 
 ## Usage
 
 Open `index.html` in any modern browser. No build step, no dependencies.
-
