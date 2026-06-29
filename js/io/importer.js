@@ -39,15 +39,14 @@ export class Importer {
                     return;
                 }
 
-                this.app.history.beginStroke();
-
+                // Create a new document in a new tab
                 const { canvasWidth, canvasHeight, layers } = data;
-                this.app.state.initCanvas(canvasWidth, canvasHeight);
-                this.app.canvas.canvasWidth = canvasWidth;
-                this.app.canvas.canvasHeight = canvasHeight;
+                this.app.createDocument(canvasWidth, canvasHeight);
 
+                // Replace the new document's layers with the loaded data
+                const doc = this.app.activeDoc;
                 const newLayers = layers.map(l => {
-                    const layer = this.app.state.createLayer(l.name);
+                    const layer = doc.state.createLayer(l.name);
                     layer.pixels = new Uint8ClampedArray(l.pixels);
                     layer.visible = l.visible;
                     layer.opacity = l.opacity;
@@ -55,11 +54,14 @@ export class Importer {
                     return layer;
                 });
 
-                this.app.state.set('layers', newLayers);
-                this.app.state.set('activeLayer', 0);
+                doc.state.set('layers', newLayers);
+                doc.state.set('activeLayer', 0);
+                doc.fileName = file.name;
+                doc.dirty = false;
                 this.app.canvas.render();
                 this.app.layersPanel.render();
-                this.app.history.endStroke();
+                this.app.tabs.render();
+                document.title = 'Pixora - ' + doc.getTitle();
             } catch (err) {
                 alert('Failed to load file: ' + err.message);
             }
@@ -77,9 +79,8 @@ export class Importer {
                 const width = img.naturalWidth || img.width;
                 const height = img.naturalHeight || img.height;
 
-                this.app.state.initCanvas(width, height);
-                this.app.canvas.canvasWidth = width;
-                this.app.canvas.canvasHeight = height;
+                this.app.createDocument(width, height);
+                const doc = this.app.activeDoc;
 
                 const tempCanvas = document.createElement('canvas');
                 tempCanvas.width = width;
@@ -88,19 +89,30 @@ export class Importer {
                 tempCtx.drawImage(img, 0, 0, width, height);
 
                 const imageData = tempCtx.getImageData(0, 0, width, height);
-                const layers = this.app.state.get('layers');
+                const layers = doc.state.get('layers');
                 if (!layers || layers.length === 0) return;
                 const layer = layers[0];
                 layer.pixels = new Uint8ClampedArray(imageData.data);
                 layer.dirty = true;
                 layer.scaledCanvas = null;
 
+                doc.fileName = file.name;
+                doc.dirty = false;
                 this.app.canvas.render();
                 this.app.layersPanel.render();
+                this.app.tabs.render();
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
+    }
+
+    loadFile(file) {
+        if (file.name.endsWith('.pixora')) {
+            this.loadPixoraFile(file);
+        } else if (file.type.startsWith('image/')) {
+            this.loadImageFile(file);
+        }
     }
 
     removeBackground() {

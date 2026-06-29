@@ -1,12 +1,12 @@
 import { CanvasEngine } from './core/canvas.js';
-import { State } from './core/state.js';
-import { History } from './core/history.js';
+import { Document } from './core/document.js';
 import { MenuBar } from './ui/menu.js';
 import { Toolbar } from './ui/toolbar.js';
 import { ColorPanel } from './ui/colorpicker-simple.js';
 import { LayersPanel } from './ui/layers.js';
 import { ToolSettings } from './ui/toolsettings.js';
 import { StatusBar } from './ui/statusbar.js';
+import { TabBar } from './ui/tabs.js';
 import { Exporter } from './io/exporter.js';
 import { Importer } from './io/importer.js';
 import { PencilTool } from './tools/pencil.js';
@@ -29,8 +29,15 @@ import { ShapeTool } from './tools/shape.js';
 
 class App {
     constructor() {
-        this.state = new State();
-        this.history = new History(this.state);
+        this.documents = [];
+        this.activeDocIndex = -1;
+
+        const doc = new Document(32, 32);
+        this.documents.push(doc);
+        this.activeDocIndex = 0;
+        this.state = doc.state;
+        this.history = doc.history;
+
         this.canvas = new CanvasEngine('pixel-canvas', this.state, this.history);
 
         this.tools = {
@@ -62,6 +69,7 @@ class App {
         this.isSpacePressed = false;
         this.lastMousePos = null;
 
+        this.tabs = new TabBar(this);
         this.menu = new MenuBar(this);
         this.toolbar = new Toolbar(this);
         this.colorPanel = new ColorPanel(this);
@@ -72,8 +80,7 @@ class App {
         this.importer = new Importer(this);
 
         window.addEventListener('beforeunload', (e) => {
-            const layers = this.state.get('layers');
-            const hasContent = layers.some(l => l.pixels.some(p => p !== 0));
+            const hasContent = this.documents.some(d => d.hasContent());
             if (hasContent) {
                 e.preventDefault();
                 e.returnValue = '';
@@ -83,8 +90,11 @@ class App {
         this.init();
     }
 
+    get activeDoc() {
+        return this.documents[this.activeDocIndex];
+    }
+
     init() {
-        this.state.initCanvas(32, 32);
         this.canvas.syncWithState();
         this.selectTool('pencil');
         this.bindEvents();
@@ -92,10 +102,122 @@ class App {
         this.layersPanel.render();
         this.toolSettings.render();
         this.statusBar.render();
-        
-        if (!this.state.get('hideBars')) {
-            document.body.classList.add('bars-visible');
+        document.title = 'Pixora - ' + this.activeDoc.getTitle();
+
+        this.applyHideBars();
+        this.relisten();
+    }
+
+    saveActiveDocState() {
+        const doc = this.activeDoc;
+        const container = document.getElementById('canvas-container');
+        doc.scrollX = container.scrollLeft;
+        doc.scrollY = container.scrollTop;
+        doc.saveToolStates(this.tools);
+    }
+
+    switchToDocument(index) {
+        if (index < 0 || index >= this.documents.length || index === this.activeDocIndex) return;
+
+        this.saveActiveDocState();
+
+        // Cancel any active transform operation
+        if (this.currentTool === this.tools.move && this.tools.move.pendingApproval) {
+            this.tools.move.approveMove();
         }
+
+        this.activeDocIndex = index;
+        const doc = this.documents[index];
+
+        this.state = doc.state;
+        this.history = doc.history;
+
+        for (const key of Object.keys(this.tools)) {
+            this.tools[key].state = doc.state;
+            this.tools[key].history = doc.history;
+        }
+
+        this.canvas.state = doc.state;
+        this.canvas.history = doc.history;
+
+        this.canvas.syncWithState();
+        this.canvas.setZoom(doc.state.get('zoom'));
+        this.canvas.render();
+
+        doc.restoreToolStates(this.tools);
+
+        const container = document.getElementById('canvas-container');
+        container.scrollLeft = doc.scrollX;
+        container.scrollTop = doc.scrollY;
+
+        this.layersPanel.render();
+        this.statusBar.render();
+        this.statusBar.attachZoomListener();
+        this.relisten();
+        this.applyHideBars();
+        this.toolSettings.render();
+        this.tabs.render();
+        document.title = 'Pixora - ' + doc.getTitle();
+    }
+
+    createDocument(width, height) {
+        const doc = new Document(width, height);
+        this.documents.push(doc);
+        this.switchToDocument(this.documents.length - 1);
+    }
+
+    closeDocument(index) {
+        if (this.documents.length <= 1) return;
+
+        if (index === this.activeDocIndex) {
+            this.saveActiveDocState();
+            if (this.currentTool === this.tools.move && this.tools.move.pendingApproval) {
+                this.tools.move.approveMove();
+            }
+
+            this.documents.splice(index, 1);
+
+            const newIdx = Math.min(index, this.documents.length - 1);
+            this.activeDocIndex = newIdx;
+            const doc = this.documents[newIdx];
+
+            this.state = doc.state;
+            this.history = doc.history;
+
+            for (const key of Object.keys(this.tools)) {
+                this.tools[key].state = doc.state;
+                this.tools[key].history = doc.history;
+            }
+
+            this.canvas.state = doc.state;
+            this.canvas.history = doc.history;
+
+            this.canvas.syncWithState();
+            this.canvas.setZoom(doc.state.get('zoom'));
+            this.canvas.render();
+
+            doc.restoreToolStates(this.tools);
+
+            const container = document.getElementById('canvas-container');
+            container.scrollLeft = doc.scrollX;
+            container.scrollTop = doc.scrollY;
+
+            this.layersPanel.render();
+            this.statusBar.render();
+            this.statusBar.attachZoomListener();
+            this.relisten();
+            this.applyHideBars();
+            this.toolSettings.render();
+            this.tabs.render();
+            document.title = 'Pixora - ' + doc.getTitle();
+        } else {
+            this.documents.splice(index, 1);
+            if (this.activeDocIndex > index) this.activeDocIndex--;
+            this.tabs.render();
+        }
+    }
+
+    relisten() {
         var self = this;
         this.state.on('hideBars', function(value) {
             if (value) {
@@ -104,6 +226,14 @@ class App {
                 document.body.classList.add('bars-visible');
             }
         });
+    }
+
+    applyHideBars() {
+        if (!this.state.get('hideBars')) {
+            document.body.classList.add('bars-visible');
+        } else {
+            document.body.classList.remove('bars-visible');
+        }
     }
 
     selectTool(name) {
@@ -191,7 +321,7 @@ class App {
 
         canvasEl.addEventListener('mousedown', (e) => {
             if (e.button === 1 || (e.button === 0 && this.isSpacePressed)) {
-                return; // Handled by container
+                return;
             }
             e.preventDefault();
             if (e.button === 2) {
@@ -325,7 +455,7 @@ class App {
             e.preventDefault();
             e.stopPropagation();
             const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
+            if (file) {
                 this.importer.loadFile(file);
             }
         });
@@ -347,7 +477,11 @@ class App {
                     break;
                 case 'n':
                     e.preventDefault();
-                    this.menu.newFileDialog();
+                    this.createDocument();
+                    break;
+                case 'w':
+                    e.preventDefault();
+                    this.closeDocument(this.activeDocIndex);
                     break;
                 case 'z':
                     e.preventDefault();
@@ -516,7 +650,6 @@ class App {
         const clipboard = this.clipboard;
         const layers = this.state.get('layers');
         
-        // Resize canvas if clipboard content extends beyond current bounds
         const newWidth = Math.max(this.canvas.width, clipboard.x + clipboard.width);
         const newHeight = Math.max(this.canvas.height, clipboard.y + clipboard.height);
         if (newWidth > this.canvas.width || newHeight > this.canvas.height) {
@@ -634,8 +767,6 @@ class App {
 
     pasteFromClipboard() {
         const now = Date.now();
-        // If internal clipboard is very fresh (copied in the last 2 seconds), prefer it.
-        // This avoids pasting stale system clipboard images when we just copied something inside.
         if (this.clipboard && (now - this.clipboard.time < 2000)) {
             this.pasteSelection();
             return;
@@ -673,7 +804,6 @@ class App {
             layer.pixels.set(imageData.data);
             layer.dirty = true;
         } else {
-            // Resize canvas if image is bigger
             const newWidth = Math.max(this.canvas.width, img.width);
             const newHeight = Math.max(this.canvas.height, img.height);
             if (newWidth > this.canvas.width || newHeight > this.canvas.height) {

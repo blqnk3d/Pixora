@@ -8,8 +8,17 @@ export class StatusBar {
         this.toolNameEl = null;
         this.pendingPos = null;
         this.frameRequested = false;
+        this._zoomListener = null;
         this.render();
-        this.app.state.on('zoom', () => this.updateZoomDisplay());
+        this.attachZoomListener();
+    }
+
+    attachZoomListener() {
+        if (this._zoomListener) {
+            this.app.state.off('zoom', this._zoomListener);
+        }
+        this._zoomListener = () => this.updateZoomDisplay();
+        this.app.state.on('zoom', this._zoomListener);
     }
 
     render() {
