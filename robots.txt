@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://blqnk3d.github.io/Pixora/sitemap.xml
